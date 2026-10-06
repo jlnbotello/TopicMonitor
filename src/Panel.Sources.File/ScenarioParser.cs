@@ -49,7 +49,8 @@ public static class ScenarioParser
 
         public ScenarioDocument ParseDocument()
         {
-            ScenarioSourceDirective? source = null;
+            var sources = new List<ScenarioSourceDirective>();
+            string? currentSourceName = null;
             var topics = new List<ScenarioTopicDirective>();
             var noises = new List<ScenarioNoiseDirective>();
             var samples = new List<ScenarioSampleLine>();
@@ -58,18 +59,19 @@ public static class ScenarioParser
             while (Cur.Kind != TokenKind.Eof)
             {
                 if (Cur.Kind == TokenKind.At)
-                    ParseDirective(ref source, topics, noises, ref loop);
+                    ParseDirective(sources, ref currentSourceName, topics, noises, ref loop);
                 else if (Cur.Kind is TokenKind.Number or TokenKind.Plus)
                     samples.Add(ParseSampleLine());
                 else
                     throw Error($"Expected a directive ('@...') or a sample time, found {Describe(Cur)}.");
             }
 
-            return new ScenarioDocument(source, topics, noises, samples, loop);
+            return new ScenarioDocument(sources, topics, noises, samples, loop);
         }
 
         private void ParseDirective(
-            ref ScenarioSourceDirective? source,
+            List<ScenarioSourceDirective> sources,
+            ref string? currentSourceName,
             List<ScenarioTopicDirective> topics,
             List<ScenarioNoiseDirective> noises,
             ref bool loop)
@@ -85,7 +87,8 @@ public static class ScenarioParser
                     if (rateKey.Text != "rate") throw new ScenarioParseException("Expected 'rate=N'.", rateKey.Line, rateKey.Column);
                     Expect(TokenKind.Equals, "'='");
                     var rateTok = Expect(TokenKind.Number, "a rate value");
-                    source = new ScenarioSourceDirective(name, (int)rateTok.Number);
+                    sources.Add(new ScenarioSourceDirective(name, (int)rateTok.Number));
+                    currentSourceName = name;
                     break;
                 }
                 case "topic":
@@ -99,7 +102,7 @@ public static class ScenarioParser
                         Expect(TokenKind.Equals, "'='");
                         policy = ParsePolicy();
                     }
-                    topics.Add(new ScenarioTopicDirective(nameTok.Text, type, enumValues, components, policy, nameTok.Line, nameTok.Column));
+                    topics.Add(new ScenarioTopicDirective(nameTok.Text, currentSourceName, type, enumValues, components, policy, nameTok.Line, nameTok.Column));
                     break;
                 }
                 case "noise":

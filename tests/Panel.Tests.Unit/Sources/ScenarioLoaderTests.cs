@@ -20,7 +20,7 @@ public class ScenarioLoaderTests
             0 led.1.raw=(0,0,0) display.line1.raw="BOOT"
             """);
 
-        var loaded = ScenarioLoader.Load(doc, bus);
+        var loaded = ScenarioLoader.Load(doc, bus).Single();
 
         loaded.SourceId.ShouldBe(new SourceId("cam"));
         loaded.Handles.Count.ShouldBe(2);
@@ -53,8 +53,8 @@ public class ScenarioLoaderTests
         var bus = CreateBus();
         var text = "@source cam rate=20\n@topic led.1.raw vec[r,g,b]\n0 led.1.raw=(0,0,0)\n";
 
-        var first = ScenarioLoader.Load(ScenarioParser.Parse(text), bus);
-        var second = ScenarioLoader.Load(ScenarioParser.Parse(text), bus);
+        var first = ScenarioLoader.Load(ScenarioParser.Parse(text), bus).Single();
+        var second = ScenarioLoader.Load(ScenarioParser.Parse(text), bus).Single();
 
         second.Handles["led.1.raw"].ShouldBe(first.Handles["led.1.raw"]);
     }
@@ -76,6 +76,41 @@ public class ScenarioLoaderTests
         var doc = ScenarioParser.Parse("@topic t float\n0 t=1\n");
         Should.Throw<ScenarioValidationException>(() => ScenarioLoader.Load(doc, CreateBus()));
     }
+
+    [Fact]
+    public void Topic_declared_before_any_source_is_a_validation_error()
+    {
+        var doc = ScenarioParser.Parse("@topic orphan float\n@source cam rate=20\n@topic t float\n0 orphan=1 t=2\n");
+        var ex = Should.Throw<ScenarioValidationException>(() => ScenarioLoader.Load(doc, CreateBus()));
+        ex.Message.ShouldContain("orphan");
+    }
+
+    [Fact]
+    public void Multiple_sources_each_produce_their_own_loaded_scenario_with_only_their_own_topics()
+    {
+        var bus = CreateBus();
+        var doc = ScenarioParser.Parse("""
+            @source cam rate=20
+            @topic led.1.raw vec[r,g,b]
+            @source ocr rate=2
+            @topic display.line1.raw string
+            0 led.1.raw=(0,0,0) display.line1.raw="BOOT"
+            """);
+
+        var scenarios = ScenarioLoader.Load(doc, bus);
+
+        scenarios.Count.ShouldBe(2);
+        var cam = scenarios.Single(s => s.SourceId == new SourceId("cam"));
+        var ocr = scenarios.Single(s => s.SourceId == new SourceId("ocr"));
+
+        cam.Handles.Keys.ShouldBe(new[] { "led.1.raw" });
+        ocr.Handles.Keys.ShouldBe(new[] { "display.line1.raw" });
+        cam.Expander.Rate.ShouldBe(20);
+        ocr.Expander.Rate.ShouldBe(2);
+
+        bus.GetDescriptor(cam.Handles["led.1.raw"]).Producer.ShouldBe("cam");
+        bus.GetDescriptor(ocr.Handles["display.line1.raw"]).Producer.ShouldBe("ocr");
+    }
 }
 
 public class ScenarioFileSourceTests
@@ -96,8 +131,8 @@ public class ScenarioFileSourceTests
 
         ok.ShouldBeTrue();
         errors.ShouldBeEmpty();
-        source.Current.ShouldNotBeNull();
-        source.Current!.SourceId.ShouldBe(new SourceId("cam"));
+        source.CurrentScenarios.ShouldNotBeNull();
+        source.CurrentScenarios!.Single().SourceId.ShouldBe(new SourceId("cam"));
     }
 
     [Fact]
@@ -109,7 +144,7 @@ public class ScenarioFileSourceTests
 
         ok.ShouldBeFalse();
         errors.ShouldNotBeEmpty();
-        source.Current.ShouldBeNull();
+        source.CurrentScenarios.ShouldBeNull();
     }
 
     [Fact]
@@ -117,13 +152,13 @@ public class ScenarioFileSourceTests
     {
         var source = CreateSource(out _, out _);
         source.TryLoad("@source cam rate=20\n@topic t float\n0 t=1\n", out _);
-        var runningBefore = source.Current;
+        var runningBefore = source.CurrentScenarios;
 
         var ok = source.TryLoad("@source cam rate=20\n@topic t float\n0 t=\"not a float\"\n", out var errors);
 
         ok.ShouldBeFalse();
         errors.ShouldNotBeEmpty();
-        source.Current.ShouldBeSameAs(runningBefore);
+        source.CurrentScenarios.ShouldBeSameAs(runningBefore);
     }
 
     [Fact]
@@ -145,7 +180,7 @@ public class ScenarioFileSourceTests
         ok.ShouldBeTrue();
 
         (await moveNext).ShouldBeTrue();
-        var handle = source.Current!.Handles["t"];
+        var handle = source.CurrentScenarios!.Single().Handles["t"];
         var topicValue = enumerator.Current.Values.Single(v => v.Topic == handle);
         topicValue.Value.AsFloat.ShouldBe(42.0);
     }

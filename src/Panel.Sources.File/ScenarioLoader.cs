@@ -2,7 +2,8 @@ using Panel.Core;
 
 namespace Panel.Sources.File;
 
-/// <summary>A parsed, validated scenario with its topics registered (or re-bound) on a bus, ready to replay.</summary>
+/// <summary>A parsed, validated scenario with its topics registered (or re-bound) on a bus, ready to replay.
+/// One instance per '@source' block in the file -- see <see cref="ScenarioLoader.Load"/>.</summary>
 public sealed record LoadedScenario(
     SourceId SourceId,
     IReadOnlyDictionary<string, TopicHandle> Handles,
@@ -17,54 +18,69 @@ public sealed record LoadedScenario(
 /// topic list) must not re-register names it already owns: if a handle for the name already exists and its
 /// descriptor is compatible with this file's declaration (same producer, type, kind, enum/vec shape), the
 /// existing handle is reused instead of calling Register again.
+///
+/// A file may declare several '@source' blocks at different rates (e.g. a fast camera source for LEDs
+/// alongside a slower one for display text that a human reads) -- <see cref="Load"/> returns one
+/// <see cref="LoadedScenario"/> per source, each owning only the topics declared after it in the file.
 /// </summary>
 public static class ScenarioLoader
 {
-    public static LoadedScenario Load(ScenarioDocument doc, ITopicBus bus, int noiseSeed = 0)
+    public static IReadOnlyList<LoadedScenario> Load(ScenarioDocument doc, ITopicBus bus, int noiseSeed = 0)
     {
         ArgumentNullException.ThrowIfNull(doc);
         ArgumentNullException.ThrowIfNull(bus);
 
-        if (doc.Source is null)
+        if (doc.Sources.Count == 0)
             throw new ScenarioValidationException("Scenario has no '@source' directive.");
 
-        var sourceId = new SourceId(doc.Source.Name);
-        var handles = new Dictionary<string, TopicHandle>();
+        var orphan = doc.Topics.FirstOrDefault(t => t.SourceName is null);
+        if (orphan is not null)
+            throw new ScenarioValidationException(
+                $"Line {orphan.Line}, column {orphan.Column}: topic '{orphan.Name}' was declared before any '@source' directive.");
 
-        foreach (var topicDirective in doc.Topics)
+        var scenarios = new List<LoadedScenario>(doc.Sources.Count);
+        foreach (var sourceDirective in doc.Sources)
         {
-            var descriptor = ToDescriptor(topicDirective, doc.Source.Name);
-            var existingHandle = bus.TryGetHandle(topicDirective.Name);
+            var sourceId = new SourceId(sourceDirective.Name);
+            var handles = new Dictionary<string, TopicHandle>();
 
-            if (existingHandle.HasValue)
+            foreach (var topicDirective in doc.Topics.Where(t => t.SourceName == sourceDirective.Name))
             {
-                var existing = bus.GetDescriptor(existingHandle.Value);
-                if (!IsCompatible(existing, descriptor))
-                    throw new ScenarioValidationException(
-                        $"Line {topicDirective.Line}, column {topicDirective.Column}: topic '{topicDirective.Name}' " +
-                        $"is already registered by producer '{existing.Producer}' with an incompatible declaration.");
+                var descriptor = ToDescriptor(topicDirective, sourceDirective.Name);
+                var existingHandle = bus.TryGetHandle(topicDirective.Name);
 
-                handles[topicDirective.Name] = existingHandle.Value;
-            }
-            else
-            {
-                try
+                if (existingHandle.HasValue)
                 {
-                    handles[topicDirective.Name] = bus.Register(descriptor);
+                    var existing = bus.GetDescriptor(existingHandle.Value);
+                    if (!IsCompatible(existing, descriptor))
+                        throw new ScenarioValidationException(
+                            $"Line {topicDirective.Line}, column {topicDirective.Column}: topic '{topicDirective.Name}' " +
+                            $"is already registered by producer '{existing.Producer}' with an incompatible declaration.");
+
+                    handles[topicDirective.Name] = existingHandle.Value;
                 }
-                catch (DuplicateTopicException ex)
+                else
                 {
-                    throw new ScenarioValidationException(
-                        $"Line {topicDirective.Line}, column {topicDirective.Column}: topic '{ex.TopicName}' " +
-                        "is already registered by another producer; a topic has exactly one producer.");
+                    try
+                    {
+                        handles[topicDirective.Name] = bus.Register(descriptor);
+                    }
+                    catch (DuplicateTopicException ex)
+                    {
+                        throw new ScenarioValidationException(
+                            $"Line {topicDirective.Line}, column {topicDirective.Column}: topic '{ex.TopicName}' " +
+                            "is already registered by another producer; a topic has exactly one producer.");
+                    }
                 }
             }
+
+            // Constructing the expander performs full literal/type validation; any failure here is a validation
+            // error for the whole file (parsed above), not a partial registration left dangling on the bus.
+            var expander = new ScenarioExpander(doc, sourceDirective.Name, noiseSeed);
+            scenarios.Add(new LoadedScenario(sourceId, handles, expander, doc));
         }
 
-        // Constructing the expander performs full literal/type validation; any failure here is a validation
-        // error for the whole file (parsed above), not a partial registration left dangling on the bus.
-        var expander = new ScenarioExpander(doc, noiseSeed);
-        return new LoadedScenario(sourceId, handles, expander, doc);
+        return scenarios;
     }
 
     private static bool IsCompatible(TopicDescriptor existing, TopicDescriptor incoming) =>

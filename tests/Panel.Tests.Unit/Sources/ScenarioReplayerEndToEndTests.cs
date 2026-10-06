@@ -48,7 +48,7 @@ public class ScenarioReplayerEndToEndTests
         ok.ShouldBeTrue(string.Join("; ", errors));
 
         Value Of(Sample sample, string topicName) =>
-            sample.Values.Single(v => v.Topic == source.Current!.Handles[topicName]).Value;
+            sample.Values.Single(v => v.Topic == source.CurrentScenarios!.Single().Handles[topicName]).Value;
 
         var currentTick = 0;
         Sample? lastSample = null;
@@ -114,5 +114,63 @@ public class ScenarioReplayerEndToEndTests
         // Every sample carries every declared topic, even unchanged ones (plan section 5: "every source tick
         // produces a sample, even without changes" - policies on the bus, not the source, decide what's dropped).
         tick40.Values.Count.ShouldBe(5);
+    }
+
+    [Fact]
+    public async Task Two_sources_at_different_rates_tick_independently_and_loop_together()
+    {
+        // "cam" samples 10x faster than "ocr" (a stand-in for a slow text reader vs. a fast LED camera) -
+        // the point of multi-source files: a display line shouldn't be sampled as if it were an LED.
+        const string scenario = """
+            @source cam rate=20
+            @topic led.1.raw vec[r,g,b]
+            @source ocr rate=2
+            @topic display.line1.raw string
+
+            0    led.1.raw=(0,0,0)       display.line1.raw="BOOT"
+            500  led.1.raw=(240,20,20)   display.line1.raw="READY"
+            @loop
+            """;
+
+        var time = new FakeTimeProvider();
+        var bus = new TopicBus(time, TimeSpan.FromMinutes(1));
+        var source = new ScenarioFileSource(bus, time);
+
+        using var cts = new CancellationTokenSource();
+        var enumerator = bus.Subscribe(TopicFilter.All, null, DeliveryMode.Lossless, cts.Token).GetAsyncEnumerator(cts.Token);
+        var moveNext = enumerator.MoveNextAsync();
+
+        var ok = source.TryLoad(scenario, out var errors);
+        ok.ShouldBeTrue(string.Join("; ", errors));
+        (await moveNext).ShouldBeTrue(); // cam's tick 0
+        (await enumerator.MoveNextAsync()).ShouldBeTrue(); // ocr's tick 0
+
+        // FakeTimeProvider timer callbacks run synchronously inside Advance, so by the time all 20 steps
+        // below return, every due tick (cam every 50ms, ocr every 500ms) has already been published into
+        // the bounded channel; draining with a single, non-overlapping MoveNextAsync loop afterward avoids
+        // ever having two outstanding MoveNextAsync calls on the same enumerator at once (which corrupts
+        // its state -- calling it again before the previous call completes is not supported).
+        for (var i = 0; i < 20; i++)
+            time.Advance(TimeSpan.FromMilliseconds(50));
+
+        var camCount = 0;
+        var ocrCount = 0;
+        for (var i = 0; i < 22; i++) // cam: 1000ms/50ms = 20 more ticks; ocr: 1000ms/500ms = 2 more ticks
+        {
+            (await enumerator.MoveNextAsync()).ShouldBeTrue();
+            if (enumerator.Current.Source == new SourceId("cam")) camCount++;
+            else if (enumerator.Current.Source == new SourceId("ocr")) ocrCount++;
+        }
+
+        camCount.ShouldBe(20);
+        ocrCount.ShouldBe(2);
+
+        // Both sources' own display of "READY"/color-change landed at the same wall-clock t=500ms, each in
+        // its own tick units (cam's 10th tick, ocr's 1st tick after tick 0) - @loop keeps them in lockstep
+        // at the file's shared last-event time, not at some per-source tick count.
+        var camScenario = source.CurrentScenarios!.Single(s => s.SourceId == new SourceId("cam"));
+        var ocrScenario = source.CurrentScenarios!.Single(s => s.SourceId == new SourceId("ocr"));
+        camScenario.Expander.Evaluate(10)["led.1.raw"].Value.AsVec.ShouldBe(new[] { 240.0, 20.0, 20.0 });
+        ocrScenario.Expander.Evaluate(1)["display.line1.raw"].Value.AsString.ShouldBe("READY");
     }
 }

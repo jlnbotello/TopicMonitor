@@ -6,8 +6,11 @@ namespace Panel.Tests.Unit.Sources;
 
 public class ScenarioExpanderTests
 {
-    private static ScenarioExpander Expand(string text, int noiseSeed = 0) =>
-        new(ScenarioParser.Parse(text), noiseSeed);
+    private static ScenarioExpander Expand(string text, int noiseSeed = 0)
+    {
+        var doc = ScenarioParser.Parse(text);
+        return new ScenarioExpander(doc, doc.Sources.Single().Name, noiseSeed);
+    }
 
     [Fact]
     public void Quantizes_exact_tick_aligned_times_to_their_tick_index()

@@ -75,8 +75,13 @@ public enum ScenarioTopicType
     Vec,
 }
 
+/// <summary><see cref="SourceName"/> is the name of whichever '@source' directive preceded this '@topic' in the
+/// file (a file may declare several '@source' blocks at different rates; each one owns the topics declared
+/// after it, until the next '@source'). Null means this topic appeared before any '@source' directive at
+/// all -- always a validation error (see <see cref="ScenarioLoader"/>), never a valid, unowned topic.</summary>
 public sealed record ScenarioTopicDirective(
     string Name,
+    string? SourceName,
     ScenarioTopicType Type,
     IReadOnlyList<string>? EnumValues,
     IReadOnlyList<string>? Components,
@@ -86,9 +91,12 @@ public sealed record ScenarioTopicDirective(
 
 public sealed record ScenarioNoiseDirective(string Glob, double Sigma);
 
-/// <summary>The fully parsed scenario file: directives plus the ordered list of sample lines.</summary>
+/// <summary>The fully parsed scenario file: directives plus the ordered list of sample lines. A file may
+/// declare several '@source' blocks, each at its own rate (e.g. a fast camera source for LEDs alongside a
+/// slower one for text a human reads) -- <see cref="Sources"/> is empty only when the file has no
+/// '@source' directive at all, which <see cref="ScenarioLoader"/> rejects.</summary>
 public sealed record ScenarioDocument(
-    ScenarioSourceDirective? Source,
+    IReadOnlyList<ScenarioSourceDirective> Sources,
     IReadOnlyList<ScenarioTopicDirective> Topics,
     IReadOnlyList<ScenarioNoiseDirective> Noises,
     IReadOnlyList<ScenarioSampleLine> Samples,

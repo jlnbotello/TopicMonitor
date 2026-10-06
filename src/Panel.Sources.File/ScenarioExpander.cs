@@ -24,47 +24,60 @@ public sealed class ScenarioExpander
     private readonly List<(TopicFilter Filter, double Sigma)> _noise;
 
     public double TickPeriodMs => _tickPeriodMs;
-    public int Rate => _doc.Source!.Rate;
+    public int Rate { get; }
     public bool Loop => _doc.Loop;
 
-    public ScenarioExpander(ScenarioDocument doc, int noiseSeed = 0)
+    /// <summary>Builds the expander for one '@source' block's own topics and tick rate. A file may declare
+    /// several sources at different rates (e.g. a fast one for LEDs, a slower one for display text); the
+    /// sample-line time grammar (absolute/relative ms) is shared and resolved once regardless of which
+    /// source is being built, but each source quantizes those shared absolute times to *its own* tick
+    /// period, and <see cref="Evaluate"/> only ever reports values for topics this source owns -- a sample
+    /// line that assigns to topics from several sources in one line is split between their respective
+    /// expanders automatically, by topic ownership, not by any special-casing here.</summary>
+    public ScenarioExpander(ScenarioDocument doc, string sourceName, int noiseSeed = 0)
     {
         _doc = doc;
         _noiseSeed = noiseSeed;
 
-        if (doc.Source is null)
-            throw new ScenarioValidationException("Scenario has no '@source' directive.");
-        if (doc.Source.Rate <= 0)
-            throw new ScenarioValidationException($"'@source {doc.Source.Name}' has a non-positive rate ({doc.Source.Rate}).");
+        var source = doc.Sources.FirstOrDefault(s => s.Name == sourceName)
+            ?? throw new ScenarioValidationException($"Unknown source '{sourceName}'.");
+        if (source.Rate <= 0)
+            throw new ScenarioValidationException($"'@source {source.Name}' has a non-positive rate ({source.Rate}).");
 
-        _tickPeriodMs = 1000.0 / doc.Source.Rate;
-        _topicsByName = doc.Topics.ToDictionary(t => t.Name);
+        Rate = source.Rate;
+        _tickPeriodMs = 1000.0 / source.Rate;
+        _topicsByName = doc.Topics.Where(t => t.SourceName == sourceName).ToDictionary(t => t.Name);
         _eventsByTopic = _topicsByName.Keys.ToDictionary(k => k, _ => new List<(long, ScenarioAssign)>());
 
         long prevAbsMs = 0;
-        long maxTick = 0;
+        long maxAbsMs = 0;
         foreach (var sampleLine in doc.Samples)
         {
             var absMs = sampleLine.Time.Relative ? prevAbsMs + sampleLine.Time.ToMilliseconds() : sampleLine.Time.ToMilliseconds();
             prevAbsMs = absMs;
+            if (absMs > maxAbsMs) maxAbsMs = absMs;
             var tick = QuantizeToTick(absMs, _tickPeriodMs);
-            if (tick > maxTick) maxTick = tick;
 
             foreach (var assign in sampleLine.Assigns)
             {
-                if (!_eventsByTopic.TryGetValue(assign.Topic, out var events))
+                if (_eventsByTopic.TryGetValue(assign.Topic, out var events))
+                    events.Add((tick, assign));
+                else if (!doc.Topics.Any(t => t.Name == assign.Topic))
                     throw new ScenarioValidationException(
                         $"Line {assign.Line}, column {assign.Column}: topic '{assign.Topic}' was not declared with '@topic'.");
-                events.Add((tick, assign));
+                // else: declared, but owned by a different '@source' -- that source's own expander handles it.
             }
         }
 
         foreach (var events in _eventsByTopic.Values)
             events.Sort((a, b) => a.Tick.CompareTo(b.Tick));
 
-        // The last explicit sample line's tick must still be observable once before the timeline wraps, so the
-        // loop period spans [0, maxTick] inclusive - maxTick + 1 distinct tick states.
-        _loopLengthTicks = maxTick + 1;
+        // The loop period is anchored to the file's shared last-event time (maxAbsMs), not to this source's
+        // own last tick, so every source wraps back to t=0 at the same real-world instant even though that
+        // instant falls on a different tick index for each source's own rate. The last explicit event must
+        // still be observable once before the timeline wraps, so the loop period spans [0, maxTick]
+        // inclusive - maxTick + 1 distinct tick states.
+        _loopLengthTicks = QuantizeToTick(maxAbsMs, _tickPeriodMs) + 1;
         _noise = doc.Noises.Select(nd => (new TopicFilter(new[] { nd.Glob }), nd.Sigma)).ToList();
 
         // Validate every literal against its topic's declared type up front, so a bad file never gets this far

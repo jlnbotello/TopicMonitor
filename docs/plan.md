@@ -80,15 +80,17 @@ A line-based text file: directives declare topics, each data line is one atomic 
 @topic led.1.raw  vec[r,g,b]
 @topic led.2.raw  vec[r,g,b]
 @topic led.3.raw  vec[r,g,b]
+@noise led.*.raw sigma=6                 # optional Gaussian noise per component
+
+@source ocr rate=2                       # reading display text is far slower than reading LEDs with a camera
 @topic display.line1.raw string
 @topic display.line2.raw string
-@noise led.*.raw sigma=6                 # optional Gaussian noise per component
 
 # t      changes
 0        led.1.raw=(0,0,0)  led.2.raw=(0,0,0)  led.3.raw=(0,0,0)  display.line1.raw="BOOT"  display.line2.raw=""
 500      led.1.raw=(240,20,20)
 +100     led.1.raw=(0,0,0)               # relative: 600 ms
-1200     led.2.raw=(20,230,30)  display.line1.raw="READY"  display.line2.raw="v1.2"
+1200     led.2.raw=(20,230,30)  display.line1.raw="READY"  display.line2.raw="v1.2"  # display text snaps to ocr's own next tick (1500 ms)
 1500     led.1.raw=blink((240,20,20),(0,0,0),5Hz)
 2000     led.3.raw=(230,200,20)
 4000     led.1.raw=ramp((240,20,20),(20,230,30),100ms)
@@ -122,7 +124,18 @@ policy     = "every" | "change" | "deadband(" number ")" ;
 **Semantics**
 
 - A topic has exactly one producer; a file topic that a processor also publishes is rejected at load.
-- Times are quantized up to the next source tick.
+- A file may declare several `@source` blocks, each at its own rate; each one owns the `@topic` directives
+  declared after it, until the next `@source`. This is the mechanism for giving different topics a
+  realistic, independent sample rate (e.g. a fast camera source for LEDs alongside a much slower one for
+  display text, which a real system would read far less often than it reads LED color/blink) rather than
+  forcing every topic in the file onto one global rate. A `@topic` declared before any `@source` directive
+  is a validation error. Each source gets its own independent tick timer and publishes its own `Sample`s
+  (tagged with its own `SourceId`); `@loop`'s wraparound point is anchored to the file's shared last
+  explicit event time, converted to each source's own tick units, so every source loops back to t = 0 at
+  the same real-world instant even though that lands on a different tick index for each one's own rate.
+- Times (including a generator's `frames` unit, e.g. `flicker`'s) are quantized up to the next tick of
+  whichever `@source` owns the topic being assigned; a sample line may freely mix assignments to topics
+  owned by different sources, each quantized independently.
 - A generator runs until the next assignment to that topic.
 - `~` sets confidence; `!` marks the topic invalid until its next value.
 - `@loop` restarts at t = 0; without it, the last state holds.

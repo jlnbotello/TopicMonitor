@@ -16,7 +16,9 @@ public sealed class ScenarioFileSource : IDisposable
     private readonly ScenarioReplayer _replayer;
     private ScenarioFileWatcher? _watcher;
 
-    public LoadedScenario? Current => _replayer.Current;
+    /// <summary>One entry per '@source' block in the currently running scenario file; null if nothing has
+    /// loaded successfully yet.</summary>
+    public IReadOnlyList<LoadedScenario>? CurrentScenarios => _replayer.CurrentScenarios;
     public IReadOnlyList<string> LastErrors { get; private set; } = Array.Empty<string>();
 
     public ScenarioFileSource(ITopicBus bus, TimeProvider timeProvider, int noiseSeed = 0)

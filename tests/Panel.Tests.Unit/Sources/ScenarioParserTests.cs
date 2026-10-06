@@ -16,15 +16,46 @@ public class ScenarioParserTests
             @loop
             """);
 
-        doc.Source.ShouldBe(new ScenarioSourceDirective("cam", 20));
+        doc.Sources.ShouldBe(new[] { new ScenarioSourceDirective("cam", 20) });
         doc.Topics.Count.ShouldBe(2);
         doc.Topics[0].Name.ShouldBe("led.1.raw");
+        doc.Topics[0].SourceName.ShouldBe("cam");
         doc.Topics[0].Type.ShouldBe(ScenarioTopicType.Vec);
         doc.Topics[0].Components.ShouldBe(new[] { "r", "g", "b" });
         doc.Topics[1].Name.ShouldBe("display.line1.raw");
         doc.Topics[1].Type.ShouldBe(ScenarioTopicType.String);
         doc.Noises.Single().ShouldBe(new ScenarioNoiseDirective("led.*.raw", 6));
         doc.Loop.ShouldBeTrue();
+    }
+
+    [Fact]
+    public void Parses_multiple_source_blocks_each_owning_the_topics_declared_after_it()
+    {
+        var doc = ScenarioParser.Parse("""
+            @source cam rate=20
+            @topic led.1.raw vec[r,g,b]
+            @source ocr rate=2
+            @topic display.line1.raw string
+            """);
+
+        doc.Sources.ShouldBe(new[]
+        {
+            new ScenarioSourceDirective("cam", 20),
+            new ScenarioSourceDirective("ocr", 2),
+        });
+        doc.Topics.Single(t => t.Name == "led.1.raw").SourceName.ShouldBe("cam");
+        doc.Topics.Single(t => t.Name == "display.line1.raw").SourceName.ShouldBe("ocr");
+    }
+
+    [Fact]
+    public void Topic_declared_before_any_source_parses_with_a_null_source_name()
+    {
+        // The parser stays permissive here (no ordering enforced at parse time) so the existing
+        // "no @source at all" validation error, raised later by ScenarioLoader, keeps working unchanged;
+        // see ScenarioLoaderTests for the "declared before any @source" validation error this produces
+        // when the file *does* have a @source directive, just not before this topic.
+        var doc = ScenarioParser.Parse("@topic orphan float\n0 orphan=1\n");
+        doc.Topics.Single().SourceName.ShouldBeNull();
     }
 
     [Fact]
@@ -221,7 +252,7 @@ public class ScenarioParserTests
             @loop
             """);
 
-        doc.Source.ShouldBe(new ScenarioSourceDirective("cam", 20));
+        doc.Sources.ShouldBe(new[] { new ScenarioSourceDirective("cam", 20) });
         doc.Topics.Count.ShouldBe(5);
         doc.Samples.Count.ShouldBe(9);
         doc.Loop.ShouldBeTrue();
