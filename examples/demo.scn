@@ -1,0 +1,20 @@
+# demo.scn
+@source cam rate=20                      # one sample every 50 ms; times snap to the next tick
+@topic led.1.raw  vec[r,g,b]
+@topic led.2.raw  vec[r,g,b]
+@topic led.3.raw  vec[r,g,b]
+@topic display.line1.raw string
+@topic display.line2.raw string
+@noise led.*.raw sigma=6                 # optional Gaussian noise per component
+
+# t      changes
+0        led.1.raw=(0,0,0)  led.2.raw=(0,0,0)  led.3.raw=(0,0,0)  display.line1.raw="BOOT"  display.line2.raw=""
+500      led.1.raw=(240,20,20)
++100     led.1.raw=(0,0,0)               # relative: 600 ms
+1200     led.2.raw=(20,230,30)  display.line1.raw="READY"  display.line2.raw="v1.2"
+1500     led.1.raw=blink((240,20,20),(0,0,0),5Hz)
+2000     led.3.raw=(230,200,20)
+4000     led.1.raw=ramp((240,20,20),(20,230,30),100ms)
+4500     led.2.raw=!                     # invalid / no data
+5000     display.line1.raw=flicker("READY","REA0Y",1)
+@loop

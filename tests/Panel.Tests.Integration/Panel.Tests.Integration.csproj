@@ -5,6 +5,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <!-- This project hosts the real ASP.NET Core server in-process (Panel.Server); the test host's apphost
+         needs the same roll-forward as Panel.Server itself to start on a machine that only has a newer
+         shared runtime (e.g. .NET 10) and not an exact 8.0.x match. -->
+    <RollForward>LatestMajor</RollForward>
   </PropertyGroup>
 
   <ItemGroup>

@@ -3,25 +3,188 @@ using Panel.Contracts;
 
 namespace Panel.Server.Services;
 
-public class TopicGrpcService : TopicService.TopicServiceBase
+/// <summary>
+/// Implements the v1 gRPC surface (plan section 6) directly over <see cref="Panel.Core.ITopicBus"/>.
+///
+/// Namespace note: this file deliberately never writes a bare <c>using Panel.Core;</c> and always
+/// qualifies Panel.Core types (<c>Panel.Core.TopicValue</c>, <c>Panel.Core.Validity</c>,
+/// <c>Panel.Core.DeliveryMode</c>, ...) because every one of those names also exists, unqualified, as a
+/// generated proto type in <c>Panel.Contracts</c> (imported unqualified below, since it's this class's
+/// actual API surface) - qualifying one side consistently avoids CS0104 ambiguous-reference errors without
+/// resorting to a pile of type aliases.
+///
+/// `is_snapshot` rule (v1 - a judgment call; the plan leaves the exact meaning open, section 6): true only
+/// for the very first <see cref="SampleBatch"/> written on a given <c>Subscribe</c> call, and only when
+/// that call requested a replay (<c>from_time</c> set). <see cref="Panel.Core.ITopicBus.Subscribe"/>
+/// doesn't expose a live-vs-replay distinction per sample, so this is the simplest defensible proxy for
+/// "this first batch may be a historical sample from the replay, not a fresh live one" - useful to a
+/// reconnecting client's UI - without requiring the bus itself to track that distinction.
+/// </summary>
+public sealed class TopicGrpcService : TopicService.TopicServiceBase
 {
+    private readonly Panel.Core.ITopicBus _bus;
+    private readonly TimeProvider _timeProvider;
+
+    public TopicGrpcService(Panel.Core.ITopicBus bus, TimeProvider timeProvider)
+    {
+        _bus = bus;
+        _timeProvider = timeProvider;
+    }
+
     public override Task<TopicCatalog> Describe(DescribeRequest request, ServerCallContext context)
     {
-        return Task.FromResult(new TopicCatalog { CatalogVersion = 0 });
+        var snapshot = _bus.GetCatalog();
+        var catalog = new TopicCatalog { CatalogVersion = snapshot.CatalogVersion };
+        foreach (var entry in snapshot.Topics)
+            catalog.Topics.Add(ToTopicInfo(entry));
+        return Task.FromResult(catalog);
     }
 
     public override Task<TimeReply> GetTime(TimeRequest request, ServerCallContext context)
     {
         return Task.FromResult(new TimeReply
         {
-            ServerMono = System.Diagnostics.Stopwatch.GetTimestamp(),
+            ServerMono = _timeProvider.GetTimestamp(),
             ServerUtcUs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() * 1000,
-            MonoFrequency = System.Diagnostics.Stopwatch.Frequency,
+            MonoFrequency = _timeProvider.TimestampFrequency,
         });
     }
 
-    public override Task Subscribe(SubscribeRequest request, IServerStreamWriter<SampleBatch> responseStream, ServerCallContext context)
+    public override async Task Subscribe(
+        SubscribeRequest request,
+        IServerStreamWriter<SampleBatch> responseStream,
+        ServerCallContext context)
     {
-        return Task.CompletedTask;
+        var patterns = request.Patterns.Count > 0 ? request.Patterns.ToArray() : new[] { "*" };
+        var filter = new Panel.Core.TopicFilter(patterns);
+        var mode = request.Mode == DeliveryMode.Latest ? Panel.Core.DeliveryMode.Latest : Panel.Core.DeliveryMode.Lossless;
+        long? fromTime = request.HasFromTime ? request.FromTime : null;
+
+        var firstBatch = true;
+        var samples = _bus.Subscribe(filter, fromTime, mode, context.CancellationToken);
+
+        try
+        {
+            await foreach (var sample in samples.ConfigureAwait(false))
+            {
+                var batch = new SampleBatch
+                {
+                    Seq = sample.Seq,
+                    Source = sample.Source.Value,
+                    T = sample.T,
+                    TPrev = sample.TPrev,
+                    TProcessed = sample.TProcessed,
+                    TPublish = _timeProvider.GetTimestamp(),
+                    TUtcUs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() * 1000,
+                    IsSnapshot = firstBatch && fromTime.HasValue,
+                    CatalogVersion = _bus.GetCatalog().CatalogVersion,
+                };
+                firstBatch = false;
+
+                foreach (var tv in sample.Values)
+                    batch.Values.Add(ToProtoTopicValue(tv));
+
+                await responseStream.WriteAsync(batch).ConfigureAwait(false);
+            }
+        }
+        catch (Panel.Core.SubscriberOverflowException ex)
+        {
+            // Plan section 5: "a subscriber behind the buffer is disconnected with a resync code." The
+            // client must re-sync via Describe() (catalog may have moved on) and a fresh
+            // Subscribe(from_time = last received t) rather than treating this as a generic failure.
+            throw new RpcException(new Status(
+                StatusCode.Aborted,
+                $"Subscriber fell behind its lossless queue and was disconnected ({ex.Message}). " +
+                "Resync via Describe() then Subscribe(from_time=<last received t>)."));
+        }
+    }
+
+    private TopicInfo ToTopicInfo(Panel.Core.TopicCatalogEntry entry)
+    {
+        var d = entry.Descriptor;
+        var info = new TopicInfo
+        {
+            Id = (uint)entry.Handle.Id,
+            Name = d.Name,
+            Type = ToValueType(d.Type),
+            Unit = d.Unit,
+            Kind = d.Kind == Panel.Core.TopicKind.Raw ? Panel.Contracts.TopicKind.Raw : Panel.Contracts.TopicKind.Derived,
+            Producer = d.Producer,
+        };
+
+        if (d.DerivedFrom is { Count: > 0 } derivedFrom) info.DerivedFrom.AddRange(derivedFrom);
+        if (d.EnumValues is { Count: > 0 } enumValues) info.EnumValues.AddRange(enumValues);
+        if (d.Components is { Count: > 0 } components) info.Components.AddRange(components);
+
+        return info;
+    }
+
+    private static Panel.Contracts.ValueType ToValueType(Panel.Core.TopicType type) => type switch
+    {
+        Panel.Core.TopicType.Float => Panel.Contracts.ValueType.Float,
+        Panel.Core.TopicType.Int => Panel.Contracts.ValueType.Int,
+        Panel.Core.TopicType.Bool => Panel.Contracts.ValueType.Bool,
+        Panel.Core.TopicType.String => Panel.Contracts.ValueType.String,
+        Panel.Core.TopicType.Enum => Panel.Contracts.ValueType.Enum,
+        Panel.Core.TopicType.Vec => Panel.Contracts.ValueType.Vec,
+        _ => Panel.Contracts.ValueType.Unspecified,
+    };
+
+    private Panel.Contracts.TopicValue ToProtoTopicValue(Panel.Core.TopicValue tv)
+    {
+        var proto = new Panel.Contracts.TopicValue
+        {
+            Topic = (uint)tv.Topic.Id,
+            Validity = tv.Validity == Panel.Core.Validity.Valid
+                ? Panel.Contracts.Validity.Valid
+                : Panel.Contracts.Validity.Invalid,
+        };
+
+        if (tv.Confidence.HasValue) proto.Confidence = tv.Confidence.Value;
+        if (tv.EvidenceSince.HasValue) proto.EvidenceSince = tv.EvidenceSince.Value;
+
+        // An Invalid TopicValue carries a meaningless default Value (see Panel.Core.TopicValue.Invalid),
+        // so the oneof `v` is deliberately left unset (None) rather than encoding a bogus 0/false/"".
+        if (tv.Validity == Panel.Core.Validity.Valid)
+        {
+            switch (tv.Value.Kind)
+            {
+                case Panel.Core.ValueKind.Float:
+                    proto.D = tv.Value.AsFloat;
+                    break;
+                case Panel.Core.ValueKind.Int:
+                    proto.I = tv.Value.AsInt;
+                    break;
+                case Panel.Core.ValueKind.Bool:
+                    proto.B = tv.Value.AsBool;
+                    break;
+                case Panel.Core.ValueKind.String:
+                    proto.S = tv.Value.AsString;
+                    break;
+                case Panel.Core.ValueKind.Enum:
+                {
+                    var descriptor = _bus.GetDescriptor(tv.Topic);
+                    var index = descriptor.EnumValues is { } values ? IndexOf(values, tv.Value.AsEnum) : -1;
+                    if (index >= 0) proto.EnumIndex = (uint)index;
+                    break;
+                }
+                case Panel.Core.ValueKind.Vec:
+                {
+                    var vec = new Vec();
+                    vec.Values.AddRange(tv.Value.AsVec);
+                    proto.Vec = vec;
+                    break;
+                }
+            }
+        }
+
+        return proto;
+    }
+
+    private static int IndexOf(IReadOnlyList<string> values, string target)
+    {
+        for (var i = 0; i < values.Count; i++)
+            if (values[i] == target) return i;
+        return -1;
     }
 }
