@@ -1,6 +1,13 @@
 # TopicMonitor
 
-A generic, timestamped topic server and WPF timeline viewer for monitoring panel state (LEDs, displays, etc.) from a replayable scenario file.
+TopicMonitor is a generic, timestamped topic bus with a gRPC server, a .NET client library, and a WPF
+timeline viewer — built to watch many fast-changing values (sensor readings, LED states, display text,
+anything with a name and a value over time) side by side on one shared, scrollable, zoomable time axis.
+A replayable scenario file drives the data for development and testing, so the whole pipeline — bus,
+derived-value processors, gRPC transport, client reconnect logic, and the viewer itself — runs and is
+testable without any real hardware attached.
+
+![TopicMonitor viewer showing LED color/state/frequency lanes alongside display text, with two time cursors placed and a hover tooltip open](docs/images/image_01.png)
 
 See [docs/plan.md](docs/plan.md) for the full design and phased implementation plan.
 
