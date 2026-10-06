@@ -21,7 +21,9 @@ templates:
 groups:
   - name: Display
     lanes:
+      - { topic: display.line1.raw }
       - { topic: display.line1.text }
+      - { topic: display.line2.raw }
       - { topic: display.line2.text }
   - { name: PWR, use: led, p: led.1 }
   - { name: RUN, use: led, p: led.2 }

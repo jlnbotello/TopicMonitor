@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Panel.Viewer.Wpf"
-        Title="Panel Monitor" Height="640" Width="1100" Background="#1E1E1E">
+        Title="Panel Monitor" Height="640" Width="1100" Background="#1E1E1E" Icon="Assets/app.ico">
     <DockPanel>
         <ToolBar DockPanel.Dock="Top">
             <ToggleButton x:Name="PauseButton" Content="Pause" Click="PauseButton_Click" />
@@ -11,6 +11,31 @@
             <Button Content="Clear cursors" Click="ClearCursors_Click" />
             <Separator />
             <TextBlock x:Name="WindowText" VerticalAlignment="Center" />
+            <Separator />
+            <TextBlock x:Name="CursorsText" VerticalAlignment="Center" />
+            <Separator />
+            <Button x:Name="HiddenLanesButton" Content="Hidden lanes (0)" Click="HiddenLanesButton_Click" />
+            <Popup x:Name="HiddenLanesPopup" PlacementTarget="{Binding ElementName=HiddenLanesButton}"
+                   Placement="Bottom" StaysOpen="False">
+                <Border Background="#2D2D2D" BorderBrush="Gray" BorderThickness="1" Padding="6" MinWidth="220">
+                    <StackPanel>
+                        <TextBlock Text="Hidden lanes" Foreground="White" FontWeight="Bold" Margin="0,0,0,4" />
+                        <ListBox x:Name="HiddenLanesList" MaxHeight="300" Background="Transparent" BorderThickness="0">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <DockPanel Margin="0,2">
+                                        <Button DockPanel.Dock="Right" Content="Show" Margin="8,0,0,0"
+                                                Tag="{Binding Key}" Click="UnhideLane_Click" />
+                                        <TextBlock Text="{Binding Name}" Foreground="White" VerticalAlignment="Center" />
+                                    </DockPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <TextBlock x:Name="NoHiddenLanesText" Text="(none)" Foreground="Gray" Margin="0,2" />
+                        <Button Content="Show all" Margin="0,6,0,0" Click="UnhideAllLanes_Click" />
+                    </StackPanel>
+                </Border>
+            </Popup>
         </ToolBar>
 
         <Border x:Name="LayoutBanner" DockPanel.Dock="Top" Background="#5A3A00" Visibility="Collapsed">

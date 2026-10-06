@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.IO;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Threading;
 using Panel.Client;
 using Panel.Contracts;
@@ -39,6 +40,7 @@ public partial class MainWindow : Window
         TimelineView.RendererScopeNote = DescribeRendererScope;
         TimelineView.CanSaveUnassigned = CanSaveUnassigned;
         TimelineView.SaveUnassignedRequested += OnSaveUnassignedRequested;
+        TimelineView.HiddenLanesChanged += () => Dispatcher.BeginInvoke(RefreshHiddenLanesUi);
 
         _client.SampleReceived += (_, _) =>
         {
@@ -257,6 +259,7 @@ public partial class MainWindow : Window
 
         WindowText.Text = $"Window: {TimelineView.Window.TotalSeconds:0.#} s";
         PauseButton.IsChecked = TimelineView.Paused;
+        CursorsText.Text = TimelineView.CursorReadout ?? string.Empty;
     }
 
     private void PauseButton_Click(object sender, RoutedEventArgs e) => TimelineView.Paused = PauseButton.IsChecked == true;
@@ -266,4 +269,30 @@ public partial class MainWindow : Window
     private void ZoomOut_Click(object sender, RoutedEventArgs e) => TimelineView.ZoomBy(1.25);
 
     private void ClearCursors_Click(object sender, RoutedEventArgs e) => TimelineView.ClearCursors();
+
+    private void HiddenLanesButton_Click(object sender, RoutedEventArgs e)
+    {
+        RefreshHiddenLanesUi();
+        HiddenLanesPopup.IsOpen = true;
+    }
+
+    private void UnhideLane_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string key })
+            TimelineView.UnhideLane(key);
+    }
+
+    private void UnhideAllLanes_Click(object sender, RoutedEventArgs e) => TimelineView.UnhideAllLanes();
+
+    /// <summary>Refreshes the "Hidden lanes (N)" toolbar button and the popup's list; hiding/unhiding a lane is a
+    /// per-session UI preference tracked inside <see cref="TimelineControl"/>, not persisted to layout.yaml.</summary>
+    private void RefreshHiddenLanesUi()
+    {
+        var hidden = TimelineView.HiddenLanes;
+        HiddenLanesButton.Content = $"Hidden lanes ({hidden.Count})";
+        HiddenLanesList.ItemsSource = hidden.Select(h => new HiddenLaneItem(h.Key, h.Name)).ToList();
+        NoHiddenLanesText.Visibility = hidden.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private sealed record HiddenLaneItem(string Key, string Name);
 }

@@ -21,7 +21,9 @@ public sealed class TimelineControl : FrameworkElement
     private static readonly double[] TickSteps = { 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 30, 60, 300 };
 
     private readonly DrawingVisual _visual = new();
+    private IReadOnlyList<LaneModel> _allLanes = Array.Empty<LaneModel>();
     private IReadOnlyList<LaneModel> _lanes = Array.Empty<LaneModel>();
+    private readonly HashSet<string> _hiddenLaneKeys = new();
     private LayoutModel _layoutModel = LayoutModel.Empty;
     private PanelClient? _source;
 
@@ -48,6 +50,9 @@ public sealed class TimelineControl : FrameworkElement
     public Func<bool>? CanSaveUnassigned { get; set; }
 
     public event Action? SaveUnassignedRequested;
+
+    /// <summary>Raised whenever a lane is hidden or unhidden (a per-session UI preference, not saved to the layout file).</summary>
+    public event Action? HiddenLanesChanged;
 
     public TimelineControl()
     {
@@ -103,11 +108,51 @@ public sealed class TimelineControl : FrameworkElement
     public void SetLanes(LayoutModel layout, IReadOnlyList<LaneModel> lanes)
     {
         _layoutModel = layout;
-        _lanes = lanes;
+        _allLanes = lanes;
+        RefreshVisibleLanes();
         _pinned = null;
         InvalidateMeasure();
         _dirty = true;
     }
+
+    /// <summary>Lanes currently hidden (session-only preference), as (key, display name) for a "hidden lanes" UI.</summary>
+    public IReadOnlyList<(string Key, string Name)> HiddenLanes =>
+        _allLanes.Where(l => _hiddenLaneKeys.Contains(l.Key)).Select(l => (l.Key, l.DisplayName)).ToList();
+
+    /// <summary>Hides a lane from the rendered/active set until <see cref="UnhideLane"/> or <see cref="UnhideAllLanes"/>.</summary>
+    public void HideLane(string key)
+    {
+        if (!_hiddenLaneKeys.Add(key)) return;
+        RefreshVisibleLanes();
+        _pinned = null;
+        InvalidateMeasure();
+        _dirty = true;
+        HiddenLanesChanged?.Invoke();
+    }
+
+    public void UnhideLane(string key)
+    {
+        if (!_hiddenLaneKeys.Remove(key)) return;
+        RefreshVisibleLanes();
+        InvalidateMeasure();
+        _dirty = true;
+        HiddenLanesChanged?.Invoke();
+    }
+
+    public void UnhideAllLanes()
+    {
+        if (_hiddenLaneKeys.Count == 0) return;
+        _hiddenLaneKeys.Clear();
+        RefreshVisibleLanes();
+        InvalidateMeasure();
+        _dirty = true;
+        HiddenLanesChanged?.Invoke();
+    }
+
+    private void RefreshVisibleLanes() =>
+        _lanes = _hiddenLaneKeys.Count == 0
+            ? _allLanes
+            : _allLanes.Where(l => !_hiddenLaneKeys.Contains(l.Key)).ToList();
 
     public void ZoomBy(double factor, double? anchorX = null)
     {
@@ -128,6 +173,26 @@ public sealed class TimelineControl : FrameworkElement
         _cursorA = _cursorB = null;
         _pinned = null;
         _dirty = true;
+    }
+
+    /// <summary>
+    /// A single-line summary of the cursor(s) currently set, e.g. "Cursors: A 1.234s  B 2.345s  Δt 1111.0 ms",
+    /// "Cursor: A 1.234s", or null when neither is set. Meant for a toolbar readout that stays visible even when
+    /// the (scrollable) canvas has been scrolled past its ruler/near-ruler labels.
+    /// </summary>
+    public string? CursorReadout
+    {
+        get
+        {
+            if (_cursorA is { } a && _cursorB is { } b)
+            {
+                var dtMs = Math.Abs(b - a) * 1000.0 / _frequency;
+                return $"Cursors: A {Sec(a):0.000}s  B {Sec(b):0.000}s  Δt {dtMs:0.0} ms";
+            }
+            if (_cursorA is { } onlyA) return $"Cursor: A {Sec(onlyA):0.000}s";
+            if (_cursorB is { } onlyB) return $"Cursor: B {Sec(onlyB):0.000}s";
+            return null;
+        }
     }
 
     protected override int VisualChildrenCount => 1;
@@ -232,18 +297,19 @@ public sealed class TimelineControl : FrameworkElement
     {
         var bottom = RulerHeight + Math.Max(1, _lanes.Count) * LaneHeight;
 
-        void One(long? t, string name, Color color)
+        void One(long? t, string name, Color color, DashStyle dash)
         {
             if (t is not { } tt) return;
             var x = map.X(tt);
             if (x < LabelWidth || x > LabelWidth + map.Width) return;
-            var pen = new Pen(Gfx.Solid(color), 1.5) { DashStyle = DashStyles.Dash };
+            var pen = new Pen(Gfx.Solid(color), 1.5) { DashStyle = dash };
             dc.DrawLine(pen, new Point(x, RulerHeight), new Point(x, bottom));
             dc.DrawText(Gfx.Text($"{name} {Sec(tt):0.000}s", 10, Gfx.Solid(color), ppd), new Point(x + 3, RulerHeight + 2));
         }
 
-        One(_cursorA, "A", Colors.Gold);
-        One(_cursorB, "B", Colors.Cyan);
+        // Color alone (gold vs. cyan) wasn't enough for the reported case; add a dash-pattern cue too.
+        One(_cursorA, "A", Colors.Gold, DashStyles.Dash);
+        One(_cursorB, "B", Colors.Cyan, DashStyles.DashDot);
 
         if (_cursorA is { } a && _cursorB is { } b)
         {
@@ -377,6 +443,12 @@ public sealed class TimelineControl : FrameworkElement
     protected override void OnMouseWheel(MouseWheelEventArgs e)
     {
         base.OnMouseWheel(e);
+
+        // A precision-touchpad pinch is synthesized as Ctrl+MouseWheel; a plain two-finger
+        // scroll is a plain MouseWheel. Only the former should zoom - the latter must bubble
+        // up to the enclosing ScrollViewer so it can scroll normally.
+        if (!Keyboard.Modifiers.HasFlag(ModifierKeys.Control)) return;
+
         ZoomBy(e.Delta > 0 ? 0.8 : 1.25, e.GetPosition(this).X);
         e.Handled = true;
     }
@@ -391,6 +463,10 @@ public sealed class TimelineControl : FrameworkElement
         {
             var lane = _lanes[hit.Lane];
             menu.Items.Add(new MenuItem { Header = lane.Spec.Topic, IsEnabled = false });
+
+            var hide = new MenuItem { Header = "Hide this lane" };
+            hide.Click += (_, _) => HideLane(lane.Key);
+            menu.Items.Add(hide);
 
             var renderers = new MenuItem { Header = "Renderer" };
             foreach (var kind in LaneModelBuilder.Applicable(lane))
