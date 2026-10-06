@@ -1,0 +1,28 @@
+# layout.yaml - demo panel
+window: 10s
+
+styles:
+  red:      { fill: red }
+  green:    { fill: green }
+  yellow:   { fill: yellow }
+  off:      { fill: "#333" }
+  blinking: { border: dashed }
+  "@low":     { hatch: true }
+  "@invalid": { fill: "#888" }
+
+templates:
+  led:
+    - { topic: "{p}.raw",   as: lines }
+    - { topic: "{p}.raw",   as: swatch, space: rgb }
+    - { topic: "{p}.color" }
+    - { topic: "{p}.freq",  unit: Hz, range: [0, 10] }
+    - { topic: "{p}.state" }
+
+groups:
+  - name: Display
+    lanes:
+      - { topic: display.line1.text }
+      - { topic: display.line2.text }
+  - { name: PWR, use: led, p: led.1 }
+  - { name: RUN, use: led, p: led.2 }
+  - { name: ERR, use: led, p: led.3 }

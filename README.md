@@ -23,3 +23,13 @@ See [docs/plan.md](docs/plan.md) for the full design and phased implementation p
 dotnet build
 dotnet test
 ```
+
+## Run
+
+```
+dotnet run --project src/Panel.Server
+dotnet run --project src/Panel.Viewer.Wpf -- --server http://localhost:5279 --layout examples/layout.yaml
+```
+
+Edit `examples/demo.scn` to change the data and `examples/layout.yaml` to change the view; both reload live.
+Viewer: wheel zooms, drag pans (pauses), click pins a value, Ctrl+click places cursors A/B, right-click a lane to change its renderer.
