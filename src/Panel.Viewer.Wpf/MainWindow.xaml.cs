@@ -16,6 +16,7 @@ public partial class MainWindow : Window
     private readonly PanelClient _client;
     private readonly LayoutFileService _layoutFile;
     private readonly Dictionary<string, RendererKind> _rendererOverrides = new();
+    private IReadOnlyList<LaneModel> _lanes = Array.Empty<LaneModel>();
     private readonly CancellationTokenSource _cts = new();
     private readonly DispatcherTimer _statusTimer = new() { Interval = TimeSpan.FromMilliseconds(250) };
 
@@ -35,6 +36,9 @@ public partial class MainWindow : Window
         _client = PanelClient.ConnectTo(options.ServerAddress);
         TimelineView.DataSource = _client;
         TimelineView.RendererChangeRequested += OnRendererChangeRequested;
+        TimelineView.RendererScopeNote = DescribeRendererScope;
+        TimelineView.CanSaveUnassigned = CanSaveUnassigned;
+        TimelineView.SaveUnassignedRequested += OnSaveUnassignedRequested;
 
         _client.SampleReceived += (_, _) =>
         {
@@ -142,28 +146,76 @@ public partial class MainWindow : Window
             lanes = TemplateExpander.Expand(effective);
         }
 
-        TimelineView.SetLanes(effective, LaneModelBuilder.Build(lanes, catalog, _rendererOverrides));
+        TimelineView.SetLanes(effective, _lanes = LaneModelBuilder.Build(lanes, catalog, _rendererOverrides));
         if (applyWindow) TimelineView.Window = effective.Window;
 
         LayoutBanner.Visibility = messages.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         LayoutBannerText.Text = string.Join(Environment.NewLine, messages);
     }
 
+    private string? DescribeRendererScope(LaneModel lane)
+    {
+        var model = _layoutFile.Document?.Model;
+        if (model is null || LayoutCatalogCheck.FindLaneIndex(model, lane.Spec) is null)
+            return "Not saved to the file (this session only)";
+
+        var template = model.Groups.FirstOrDefault(g => g.Name == lane.Spec.GroupName)?.Use;
+        if (template is null) return "Saved to layout.yaml";
+
+        var groups = model.Groups.Count(g => g.Use == template);
+        return $"Saved to template '{template}' (affects {groups} group{(groups == 1 ? "" : "s")})";
+    }
+
+    private bool CanSaveUnassigned() => UnassignedTopics().Count > 0;
+
+    private IReadOnlyList<string> UnassignedTopics()
+    {
+        var document = _layoutFile.Document;
+        var catalog = _client.Catalog;
+        return document is null || catalog is null
+            ? Array.Empty<string>()
+            : LayoutCatalogCheck.Check(document.Model, catalog.Topics.Select(t => t.Name)).UnusedInLayout;
+    }
+
+    private void OnSaveUnassignedRequested()
+    {
+        var topics = UnassignedTopics().ToHashSet();
+        var specs = _lanes
+            .Where(l => topics.Contains(l.Spec.Topic))
+            .Select(l => new LaneSpec(l.Spec.Topic, As: l.Renderer.ToYamlString(), Unit: l.Spec.Unit, Space: l.Spec.Space))
+            .ToList();
+
+        try
+        {
+            _layoutFile.AppendGroup(LayoutDefaults.FillGroupName, specs);
+        }
+        catch (Exception ex) when (ex is IOException or InvalidOperationException or UnauthorizedAccessException)
+        {
+            MessageBox.Show(this, ex.Message, "Could not save layout", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        foreach (var lane in _lanes.Where(l => topics.Contains(l.Spec.Topic)))
+            _rendererOverrides.Remove(lane.Key);
+        RebuildLanes(applyWindow: false);
+    }
+
     private void OnRendererChangeRequested(LaneModel lane, RendererKind renderer)
     {
         var document = _layoutFile.Document;
-        var yamlTopic = document is null ? null : LayoutCatalogCheck.FindYamlTopic(document.Model, lane.Spec);
+        var laneIndex = document is null ? null : LayoutCatalogCheck.FindLaneIndex(document.Model, lane.Spec);
 
-        if (yamlTopic is null)
+        if (laneIndex is not { } index)
         {
-            // Not an unambiguous node of the file (auto-generated or shared topic): keep the choice for this session only.
+            // Auto-generated lanes are not in the file; keep the choice for this session only.
             _rendererOverrides[lane.Key] = renderer;
         }
         else
         {
             try
             {
-                _layoutFile.SetRenderer(yamlTopic, renderer);
+                _layoutFile.SetRenderer(index, renderer);
+                _rendererOverrides.Remove(lane.Key);
             }
             catch (Exception ex) when (ex is IOException or InvalidOperationException or UnauthorizedAccessException)
             {

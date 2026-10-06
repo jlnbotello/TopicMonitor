@@ -42,6 +42,13 @@ public sealed class TimelineControl : FrameworkElement
 
     public event Action<LaneModel, RendererKind>? RendererChangeRequested;
 
+    /// <summary>Text shown under the renderer choices, e.g. where a change will be saved.</summary>
+    public Func<LaneModel, string?>? RendererScopeNote { get; set; }
+
+    public Func<bool>? CanSaveUnassigned { get; set; }
+
+    public event Action? SaveUnassignedRequested;
+
     public TimelineControl()
     {
         AddVisualChild(_visual);
@@ -393,10 +400,19 @@ public sealed class TimelineControl : FrameworkElement
                 item.Click += (_, _) => RendererChangeRequested?.Invoke(lane, chosen);
                 renderers.Items.Add(item);
             }
+            if (renderers.Items.Count > 0 && RendererScopeNote?.Invoke(lane) is { } note)
+            {
+                renderers.Items.Add(new Separator());
+                renderers.Items.Add(new MenuItem { Header = note, IsEnabled = false });
+            }
             renderers.IsEnabled = renderers.Items.Count > 0;
             menu.Items.Add(renderers);
             menu.Items.Add(new Separator());
         }
+
+        var save = new MenuItem { Header = "Save unassigned lanes to layout file", IsEnabled = CanSaveUnassigned?.Invoke() == true };
+        save.Click += (_, _) => SaveUnassignedRequested?.Invoke();
+        menu.Items.Add(save);
 
         var clear = new MenuItem { Header = "Clear cursors and pin" };
         clear.Click += (_, _) => ClearCursors();

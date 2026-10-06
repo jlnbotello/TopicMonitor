@@ -32,4 +32,4 @@ dotnet run --project src/Panel.Viewer.Wpf -- --server http://localhost:5279 --la
 ```
 
 Edit `examples/demo.scn` to change the data and `examples/layout.yaml` to change the view; both reload live.
-Viewer: wheel zooms, drag pans (pauses), click pins a value, Ctrl+click places cursors A/B, right-click a lane to change its renderer.
+Viewer: wheel zooms, drag pans (pauses), click pins a value, Ctrl+click places cursors A/B, right-click a lane to change its renderer or save unassigned lanes to the layout file.

@@ -22,28 +22,28 @@ public class LayoutCatalogCheckTests
     }
 
     [Fact]
-    public void FindYamlTopic_returns_the_template_pattern_for_a_template_lane()
+    public void FindLaneIndex_counts_template_entries_first_then_direct_lanes()
     {
-        var lane = TemplateExpander.Expand(Model).Single(l => l.GroupName == "RUN" && l.Topic == "led.2.state");
+        var lanes = TemplateExpander.Expand(Model);
 
-        LayoutCatalogCheck.FindYamlTopic(Model, lane).ShouldBe("{p}.state");
+        LayoutCatalogCheck.FindLaneIndex(Model, lanes.Single(l => l.GroupName == "RUN" && l.Topic == "led.2.state")).ShouldBe(4);
+        LayoutCatalogCheck.FindLaneIndex(Model, lanes.Single(l => l.Topic == "display.line1.text")).ShouldBe(5);
     }
 
     [Fact]
-    public void FindYamlTopic_returns_the_concrete_topic_for_a_direct_lane()
+    public void FindLaneIndex_tells_apart_lanes_that_share_a_topic()
     {
-        var lane = TemplateExpander.Expand(Model).Single(l => l.Topic == "display.line1.text");
+        var lanes = TemplateExpander.Expand(Model).Where(l => l.GroupName == "PWR" && l.Topic == "led.1.raw").ToList();
 
-        LayoutCatalogCheck.FindYamlTopic(Model, lane).ShouldBe("display.line1.text");
+        LayoutCatalogCheck.FindLaneIndex(Model, lanes.Single(l => l.As == "lines")).ShouldBe(0);
+        LayoutCatalogCheck.FindLaneIndex(Model, lanes.Single(l => l.As == "swatch")).ShouldBe(1);
     }
 
     [Fact]
-    public void FindYamlTopic_returns_null_for_auto_generated_and_ambiguous_lanes()
+    public void FindLaneIndex_returns_null_for_auto_generated_lanes()
     {
         var autoLane = new ExpandedLane(LayoutDefaults.FillGroupName, "new.counter", null, null, null, null);
-        var ambiguous = TemplateExpander.Expand(Model).First(l => l.GroupName == "PWR" && l.Topic == "led.1.raw");
 
-        LayoutCatalogCheck.FindYamlTopic(Model, autoLane).ShouldBeNull();
-        LayoutCatalogCheck.FindYamlTopic(Model, ambiguous).ShouldBeNull();
+        LayoutCatalogCheck.FindLaneIndex(Model, autoLane).ShouldBeNull();
     }
 }

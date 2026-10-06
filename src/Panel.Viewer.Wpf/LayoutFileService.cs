@@ -70,12 +70,19 @@ public sealed class LayoutFileService : IDisposable
         }
     }
 
-    /// <summary>Changes one lane's renderer in place and writes the file; <paramref name="yamlTopic"/> is the topic as written in the YAML.</summary>
-    public void SetRenderer(string yamlTopic, RendererKind renderer)
+    /// <summary>Changes one lane entry's renderer in place and writes the file; <paramref name="laneIndex"/> comes from <see cref="LayoutCatalogCheck.FindLaneIndex"/>.</summary>
+    public void SetRenderer(int laneIndex, RendererKind renderer) =>
+        Apply(doc => doc.WithLaneRenderer(laneIndex, renderer));
+
+    /// <summary>Appends a group of lanes to the file's <c>groups:</c>.</summary>
+    public void AppendGroup(string name, IReadOnlyList<LaneSpec> lanes) =>
+        Apply(doc => doc.WithAppendedGroup(name, lanes));
+
+    private void Apply(Func<LayoutDocument, LayoutDocument> edit)
     {
         lock (_gate)
         {
-            var updated = (_loader.Current ?? throw new InvalidOperationException("No layout loaded.")).WithLaneRenderer(yamlTopic, renderer);
+            var updated = edit(_loader.Current ?? throw new InvalidOperationException("No layout loaded."));
             updated.SaveTo(_path);
             _loader.LoadFromText(updated.RawText);
             LastError = null;

@@ -22,31 +22,41 @@ public static class LayoutCatalogCheck
     }
 
     /// <summary>
-    /// The topic exactly as written in the YAML for <paramref name="lane"/> (a template pattern such as
-    /// <c>{p}.raw</c> for template lanes, the concrete name for direct lanes), or <c>null</c> when the lane is
-    /// not in <paramref name="model"/> (e.g. auto-generated) or shares its topic with a sibling lane (the
-    /// YAML patch locates lanes by topic, so it would edit the wrong one). Pass to <see cref="LayoutDocument.WithLaneRenderer"/>.
+    /// Position of the lane entry in the file that produced <paramref name="lane"/> (template entries first,
+    /// then direct group lanes, each in file order), or <c>null</c> when it is not in <paramref name="model"/>
+    /// (e.g. auto-generated) or two entries are identical. Pass to <see cref="LayoutDocument.WithLaneRenderer(int, RendererKind)"/>.
     /// </summary>
-    public static string? FindYamlTopic(LayoutModel model, ExpandedLane lane)
+    public static int? FindLaneIndex(LayoutModel model, ExpandedLane lane)
     {
-        foreach (var group in model.Groups)
-        {
-            if (group.Name != lane.GroupName) continue;
+        var index = 0;
+        var matches = new List<int>();
 
-            if (group.IsTemplateUse && group.P is not null && model.Templates.TryGetValue(group.Use!, out var templateLanes))
+        foreach (var (templateName, specs) in model.Templates)
+        {
+            foreach (var spec in specs)
             {
-                foreach (var spec in templateLanes)
-                    if (spec.Topic.Replace("{p}", group.P) == lane.Topic)
-                        return templateLanes.Count(s => s.Topic == spec.Topic) == 1 ? spec.Topic : null;
-            }
-            else if (group.Lanes is not null)
-            {
-                foreach (var spec in group.Lanes)
-                    if (spec.Topic == lane.Topic)
-                        return group.Lanes.Count(s => s.Topic == spec.Topic) == 1 ? spec.Topic : null;
+                var produces = model.Groups.Any(g =>
+                    g.Name == lane.GroupName && g.Use == templateName && g.P is not null
+                    && spec.Topic.Replace("{p}", g.P) == lane.Topic);
+                if (produces && Describes(spec, lane)) matches.Add(index);
+                index++;
             }
         }
 
-        return null;
+        foreach (var group in model.Groups)
+        {
+            if (group.Lanes is null) continue;
+            foreach (var spec in group.Lanes)
+            {
+                if (group.Name == lane.GroupName && spec.Topic == lane.Topic && Describes(spec, lane)) matches.Add(index);
+                index++;
+            }
+        }
+
+        return matches.Count == 1 ? matches[0] : null;
     }
+
+    private static bool Describes(LaneSpec spec, ExpandedLane lane) =>
+        spec.As == lane.As && spec.Unit == lane.Unit && spec.Space == lane.Space
+        && (spec.Range is null ? lane.Range is null : lane.Range is not null && spec.Range.SequenceEqual(lane.Range));
 }

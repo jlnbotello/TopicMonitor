@@ -52,6 +52,44 @@ internal static class LayoutNodeLocator
         return null;
     }
 
+    /// <summary>
+    /// Every lane mapping in file order: template entries (templates in file order), then direct lanes of
+    /// groups. <see cref="LayoutCatalogCheck.FindLaneIndex"/> counts in the same order.
+    /// </summary>
+    public static IReadOnlyList<YamlMappingNode> EnumerateLanes(YamlMappingNode root)
+    {
+        var result = new List<YamlMappingNode>();
+
+        foreach (var (key, value) in root.Children)
+        {
+            if (key is YamlScalarNode { Value: "templates" } && value is YamlMappingNode templatesMap)
+                foreach (var (_, templateValue) in templatesMap.Children)
+                    if (templateValue is YamlSequenceNode seq)
+                        result.AddRange(seq.Children.OfType<YamlMappingNode>());
+        }
+
+        foreach (var (key, value) in root.Children)
+        {
+            if (key is not YamlScalarNode { Value: "groups" } || value is not YamlSequenceNode groupsSeq) continue;
+
+            foreach (var groupNode in groupsSeq.Children.OfType<YamlMappingNode>())
+                foreach (var (laneKey, laneValue) in groupNode.Children)
+                    if (laneKey is YamlScalarNode { Value: "lanes" } && laneValue is YamlSequenceNode lanesSeq)
+                        result.AddRange(lanesSeq.Children.OfType<YamlMappingNode>());
+        }
+
+        return result;
+    }
+
+    /// <summary>The <c>groups:</c> sequence, or null when absent or not a sequence.</summary>
+    public static YamlSequenceNode? FindGroups(YamlMappingNode root)
+    {
+        foreach (var (key, value) in root.Children)
+            if (key is YamlScalarNode { Value: "groups" } && value is YamlSequenceNode seq)
+                return seq;
+        return null;
+    }
+
     /// <summary>Finds the mapping node for a named entry of the <c>styles:</c> section.</summary>
     public static YamlMappingNode? FindStyleMapping(YamlMappingNode root, string styleName)
     {
