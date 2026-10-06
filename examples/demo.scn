@@ -19,4 +19,8 @@
 4000     led.1.raw=ramp((240,20,20),(20,230,30),100ms)
 4500     led.2.raw=!                     # invalid / no data
 5000     display.line1.raw=flicker("READY","REA0Y",1)
+7000                                     # bare time, no assigns: just pushes the loop point out so ocr's slower
+                                         # 500ms tick gets a few ticks to actually alternate the flicker above
+                                         # before @loop wraps everything back to t=0 (otherwise ocr's tick
+                                         # right after 5000 would already be the wrap, and REA0Y would never show)
 @loop

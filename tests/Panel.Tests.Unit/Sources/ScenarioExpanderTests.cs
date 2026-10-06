@@ -251,4 +251,33 @@ public class ScenarioExpanderTests
         Should.Throw<ScenarioValidationException>(() =>
             Expand("@source s rate=10\n@topic t float\n0 nope=1\n"));
     }
+
+    [Fact]
+    public void Flicker_on_a_slow_source_gets_enough_ticks_to_actually_alternate_before_the_loop_wraps()
+    {
+        // Regression for examples/demo.scn: the shared loop-wrap point is anchored to the file's last
+        // explicit event time (maxAbsMs), quantized to *each source's own* tick period. Without a trailing
+        // bare time line pushing that point past the flicker's start, "ocr" (500ms/tick) would get exactly
+        // one tick at the flicker's start before wrapping back to t=0 -- never enough to alternate, so
+        // "REA0Y" would never actually appear despite the generator being declared. The bare "7000" line
+        // (no assigns) exists purely to give ocr's slower tick rate room to show it.
+        var doc = ScenarioParser.Parse("""
+            @source cam rate=20
+            @topic led.1.raw vec[r,g,b]
+            @source ocr rate=2
+            @topic display.line1.raw string
+            0    led.1.raw=(0,0,0) display.line1.raw="BOOT"
+            5000 display.line1.raw=flicker("READY","REA0Y",1)
+            7000
+            @loop
+            """);
+
+        var ocr = new ScenarioExpander(doc, "ocr");
+
+        // 5000ms quantizes to ocr's tick 10 (500ms/tick); each subsequent tick should flip the flicker.
+        ocr.Evaluate(10)["display.line1.raw"].Value.AsString.ShouldBe("READY");
+        ocr.Evaluate(11)["display.line1.raw"].Value.AsString.ShouldBe("REA0Y");
+        ocr.Evaluate(12)["display.line1.raw"].Value.AsString.ShouldBe("READY");
+        ocr.Evaluate(13)["display.line1.raw"].Value.AsString.ShouldBe("REA0Y");
+    }
 }

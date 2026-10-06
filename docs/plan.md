@@ -96,6 +96,8 @@ A line-based text file: directives declare topics, each data line is one atomic 
 4000     led.1.raw=ramp((240,20,20),(20,230,30),100ms)
 4500     led.2.raw=!                     # invalid / no data
 5000     display.line1.raw=flicker("READY","REA0Y",1)
+7000                                     # bare time, no assigns: gives ocr's slower tick a few ticks to
+                                         # actually alternate the flicker before @loop wraps everyone back
 @loop
 ```
 
