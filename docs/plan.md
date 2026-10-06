@@ -376,8 +376,8 @@ Tooling: xUnit, Shouldly, `Microsoft.Extensions.TimeProvider.Testing`, HdrHistog
 | Saving the layout from the GUI | YamlDotNet round trip drops comments and formatting of hand-edited files | Decide accepted behavior (see open points) |
 | Formats grow ad hoc | Parsers hard to maintain | Grammar and YAML schema kept in this plan; every addition gets tests |
 
-**Open points**
+**Open points — resolved (2026-10-06)**
 
-1. Saving from the GUI: is losing comments in `layout.yaml` acceptable, or must hand-written comments survive?
-2. Missing layout: should the viewer auto-generate a default layout from the catalog (one lane per topic, default renderer)?
-3. Color classifier k: default k = 2 (50 ms extra delay), or k = 1?
+1. Saving from the GUI: hand-written comments and formatting in `layout.yaml` must survive. `Panel.Viewer.Layout` saves via a targeted text patch (locate the touched node's line/column with YamlDotNet's `RepresentationModel`, then rewrite only that key's text in place) instead of a full re-serialize, so untouched lines — including comments — are byte-for-byte unchanged.
+2. Missing layout: yes, auto-generate. On connect, any catalog topic with no matching lane gets one appended using its type's default renderer; this happens in-memory in the viewer and is only persisted to `layout.yaml` if the user triggers a save.
+3. Color classifier k: default k = 2, as already used in the worked example (section 5) and the delay test (section 9).

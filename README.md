@@ -2,7 +2,7 @@
 
 A generic, timestamped topic server and WPF timeline viewer for monitoring panel state (LEDs, displays, etc.) from a replayable scenario file.
 
-See [panel-monitor-plan-v1.md](panel-monitor-plan-v1.md) for the full design and phased implementation plan.
+See [docs/plan.md](docs/plan.md) for the full design and phased implementation plan.
 
 ## Solution layout
 
