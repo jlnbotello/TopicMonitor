@@ -90,7 +90,10 @@ public sealed class BlinkDetectorProcessor
         var ticksPerSecond = _timeProvider.TimestampFrequency;
 
         ulong seq = 0;
-        await foreach (var sample in _bus.Subscribe(filter, null, DeliveryMode.Lossless, cancellationToken).ConfigureAwait(false))
+        // fromTime: long.MinValue (not null) replays everything already in history before switching to live --
+        // see the matching comment in ColorClassifierProcessor.RunAsync for why a live-only subscribe would
+        // deterministically miss its input's first sample.
+        await foreach (var sample in _bus.Subscribe(filter, long.MinValue, DeliveryMode.Lossless, cancellationToken).ConfigureAwait(false))
         {
             if (sample.Values.Count == 0) continue;
 

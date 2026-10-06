@@ -75,7 +75,12 @@ public sealed class ColorClassifierProcessor
         if (entries.Count == 0) return;
 
         ulong seq = 0;
-        await foreach (var sample in _bus.Subscribe(filter, null, DeliveryMode.Lossless, cancellationToken).ConfigureAwait(false))
+        // fromTime: long.MinValue (not null) replays everything already in history before switching to live.
+        // Registration above only reserves this processor's output topics; it does not mean the bus has no raw
+        // samples yet -- a source's very first tick is typically published during its own startup, strictly
+        // before this RunAsync call even begins, so a live-only subscribe (fromTime: null) would deterministically
+        // miss it on every run.
+        await foreach (var sample in _bus.Subscribe(filter, long.MinValue, DeliveryMode.Lossless, cancellationToken).ConfigureAwait(false))
         {
             if (sample.Values.Count == 0) continue;
 
