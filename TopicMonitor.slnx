@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Panel.Client/Panel.Client.csproj" />
+    <Project Path="src/Panel.Contracts/Panel.Contracts.csproj" />
+    <Project Path="src/Panel.Core/Panel.Core.csproj" />
+    <Project Path="src/Panel.Processors/Panel.Processors.csproj" />
+    <Project Path="src/Panel.Server/Panel.Server.csproj" />
+    <Project Path="src/Panel.Sources.File/Panel.Sources.File.csproj" />
+    <Project Path="src/Panel.Viewer.Layout/Panel.Viewer.Layout.csproj" />
+    <Project Path="src/Panel.Viewer.Wpf/Panel.Viewer.Wpf.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Panel.Tests.Integration/Panel.Tests.Integration.csproj" />
+    <Project Path="tests/Panel.Tests.Unit/Panel.Tests.Unit.csproj" />
+  </Folder>
+</Solution>
