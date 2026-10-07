@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\TopicMonitor.Core\TopicMonitor.Core.csproj" />
+    <ProjectReference Include="..\TopicMonitor.Processors\TopicMonitor.Processors.csproj" />
+    <ProjectReference Include="..\TopicMonitor.Sources.File\TopicMonitor.Sources.File.csproj" />
+    <ProjectReference Include="..\TopicMonitor.Contracts\TopicMonitor.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Grpc.AspNetCore" Version="2.66.0" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Lets `dotnet run`/the apphost start on a machine that only has a newer shared runtime installed
+         (e.g. .NET 10) and not an exact 8.0.x match, without changing the net8.0 target itself. -->
+    <RollForward>LatestMajor</RollForward>
+  </PropertyGroup>
+
+</Project>

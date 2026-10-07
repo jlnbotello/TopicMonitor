@@ -1,0 +1,106 @@
+syntax = "proto3";
+
+option csharp_namespace = "TopicMonitor.Contracts";
+
+package panel;
+
+service TopicService {
+  rpc Describe(DescribeRequest) returns (TopicCatalog);
+  rpc Subscribe(SubscribeRequest) returns (stream SampleBatch);
+  rpc GetTime(TimeRequest) returns (TimeReply);
+}
+
+enum ValueType {
+  VALUE_TYPE_UNSPECIFIED = 0;
+  FLOAT = 1;
+  INT = 2;
+  BOOL = 3;
+  STRING = 4;
+  ENUM = 5;
+  VEC = 6;
+}
+
+enum TopicKind {
+  TOPIC_KIND_UNSPECIFIED = 0;
+  RAW = 1;
+  DERIVED = 2;
+}
+
+enum DeliveryMode {
+  DELIVERY_MODE_UNSPECIFIED = 0;
+  LOSSLESS = 1;
+  LATEST = 2;
+}
+
+enum Validity {
+  VALIDITY_UNSPECIFIED = 0;
+  VALID = 1;
+  INVALID = 2;
+}
+
+message DescribeRequest {
+}
+
+message TopicCatalog {
+  repeated TopicInfo topics = 1;
+  uint64 catalog_version = 2;
+}
+
+message TopicInfo {
+  uint32 id = 1;
+  string name = 2;
+  ValueType type = 3;
+  string unit = 4;
+  TopicKind kind = 5;
+  string producer = 6;
+  repeated string derived_from = 7;
+  repeated string enum_values = 8;
+  repeated string components = 9;
+}
+
+message SubscribeRequest {
+  repeated string patterns = 1;
+  optional int64 from_time = 2;
+  DeliveryMode mode = 3;
+}
+
+message SampleBatch {
+  uint64 seq = 1;
+  string source = 2;
+  int64 t = 3;
+  int64 t_prev = 4;
+  int64 t_processed = 5;
+  int64 t_publish = 6;
+  int64 t_utc_us = 7;
+  bool is_snapshot = 8;
+  uint64 catalog_version = 9;
+  repeated TopicValue values = 10;
+}
+
+message TopicValue {
+  uint32 topic = 1;
+  oneof v {
+    bool b = 2;
+    int64 i = 3;
+    double d = 4;
+    string s = 5;
+    uint32 enum_index = 6;
+    Vec vec = 7;
+  }
+  optional float confidence = 8;
+  Validity validity = 9;
+  optional int64 evidence_since = 10;
+}
+
+message Vec {
+  repeated double values = 1;
+}
+
+message TimeRequest {
+}
+
+message TimeReply {
+  int64 server_mono = 1;
+  int64 server_utc_us = 2;
+  int64 mono_frequency = 3;
+}

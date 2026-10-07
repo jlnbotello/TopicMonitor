@@ -1,11 +1,11 @@
 # Writing a new topic source
 
 A "source" is anything that registers topics on the bus and publishes `Sample`s to them — the scenario
-file reader (`Panel.Sources.File`) is one; a future camera reader (see `docs/plan.md` section 11)
-would be another. This doc covers the generic part: everything a source needs from `Panel.Core`,
+file reader (`TopicMonitor.Sources.File`) is one; a future camera reader (see `docs/plan.md` section 11)
+would be another. This doc covers the generic part: everything a source needs from `TopicMonitor.Core`,
 independent of where the data actually comes from.
 
-All of this lives in `Panel.Core` — read `src/Panel.Core/*.cs` directly alongside this doc; it's short.
+All of this lives in `TopicMonitor.Core` — read `src/TopicMonitor.Core/*.cs` directly alongside this doc; it's short.
 
 ## The three things a source does
 
@@ -144,7 +144,7 @@ public sealed class RandomWalkSource : IDisposable
 }
 ```
 
-Wire it into `Panel.Server` the same way `ScenarioLoaderHostedService`/`ScenarioFileSource` are wired in
+Wire it into `TopicMonitor.Server` the same way `ScenarioLoaderHostedService`/`ScenarioFileSource` are wired in
 `Program.cs` — register it (and the bus) in DI, start it as an `IHostedService`/`BackgroundService`, stop it
 in `StopAsync`.
 
@@ -155,6 +155,6 @@ Same `ITopicBus` surface, slightly different shape: register with `Kind: TopicKi
 and republish a transformed value. One important, easy-to-miss detail: subscribe with
 `fromTime: long.MinValue`, not `fromTime: null` — a live-only subscribe misses anything already published
 before you started (this bit every processor in this codebase at least once; see the comment on
-`ColorClassifierProcessor.RunAsync` for the full story). `src/Panel.Processors/*.cs` are the three
+`ColorClassifierProcessor.RunAsync` for the full story). `src/TopicMonitor.Processors/*.cs` are the three
 reference implementations (color classifier, blink detector, text stabilizer) — read one of them end to
 end before writing a new processor.

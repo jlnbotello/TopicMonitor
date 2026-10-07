@@ -13,16 +13,16 @@ See [docs/plan.md](docs/plan.md) for the full design and phased implementation p
 
 ## Solution layout
 
-- `src/Panel.Contracts` — `.proto` definitions and generated gRPC/C# types
-- `src/Panel.Core` — topic bus, descriptors, samples, publish policies, history
-- `src/Panel.Processors` — color classifier, blink detector, text stabilizer
-- `src/Panel.Sources.File` — scenario (`.scn`) parser, expander, replayer, file watcher
-- `src/Panel.Server` — Kestrel host, gRPC services, configuration
-- `src/Panel.Client` — catalog, subscription, state store, history, reconnect
-- `src/Panel.Viewer.Layout` — YAML layout model, template expansion, style resolution
-- `src/Panel.Viewer.Wpf` — timeline control, lane renderers, interaction
-- `tests/Panel.Tests.Unit` — unit tests (deterministic, no GUI)
-- `tests/Panel.Tests.Integration` — local integration tests over real gRPC
+- `src/TopicMonitor.Contracts` — `.proto` definitions and generated gRPC/C# types
+- `src/TopicMonitor.Core` — topic bus, descriptors, samples, publish policies, history
+- `src/TopicMonitor.Processors` — color classifier, blink detector, text stabilizer
+- `src/TopicMonitor.Sources.File` — scenario (`.scn`) parser, expander, replayer, file watcher
+- `src/TopicMonitor.Server` — Kestrel host, gRPC services, configuration
+- `src/TopicMonitor.Client` — catalog, subscription, state store, history, reconnect
+- `src/TopicMonitor.Viewer.Layout` — YAML layout model, template expansion, style resolution
+- `src/TopicMonitor.Viewer.Wpf` — timeline control, lane renderers, interaction
+- `tests/TopicMonitor.Tests.Unit` — unit tests (deterministic, no GUI)
+- `tests/TopicMonitor.Tests.Integration` — local integration tests over real gRPC
 
 ## Build and test
 
@@ -34,8 +34,8 @@ dotnet test
 ## Run
 
 ```
-dotnet run --project src/Panel.Server
-dotnet run --project src/Panel.Viewer.Wpf -- --server http://localhost:5279 --layout examples/layout.yaml
+dotnet run --project src/TopicMonitor.Server
+dotnet run --project src/TopicMonitor.Viewer.Wpf -- --server http://localhost:5279 --layout examples/layout.yaml
 ```
 
 Edit `examples/demo.scn` to change the data and `examples/layout.yaml` to change the view; both reload live.

@@ -1,16 +1,16 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="src/Panel.Client/Panel.Client.csproj" />
-    <Project Path="src/Panel.Contracts/Panel.Contracts.csproj" />
-    <Project Path="src/Panel.Core/Panel.Core.csproj" />
-    <Project Path="src/Panel.Processors/Panel.Processors.csproj" />
-    <Project Path="src/Panel.Server/Panel.Server.csproj" />
-    <Project Path="src/Panel.Sources.File/Panel.Sources.File.csproj" />
-    <Project Path="src/Panel.Viewer.Layout/Panel.Viewer.Layout.csproj" />
-    <Project Path="src/Panel.Viewer.Wpf/Panel.Viewer.Wpf.csproj" />
+    <Project Path="src/TopicMonitor.Client/TopicMonitor.Client.csproj" />
+    <Project Path="src/TopicMonitor.Contracts/TopicMonitor.Contracts.csproj" />
+    <Project Path="src/TopicMonitor.Core/TopicMonitor.Core.csproj" />
+    <Project Path="src/TopicMonitor.Processors/TopicMonitor.Processors.csproj" />
+    <Project Path="src/TopicMonitor.Server/TopicMonitor.Server.csproj" />
+    <Project Path="src/TopicMonitor.Sources.File/TopicMonitor.Sources.File.csproj" />
+    <Project Path="src/TopicMonitor.Viewer.Layout/TopicMonitor.Viewer.Layout.csproj" />
+    <Project Path="src/TopicMonitor.Viewer.Wpf/TopicMonitor.Viewer.Wpf.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/Panel.Tests.Integration/Panel.Tests.Integration.csproj" />
-    <Project Path="tests/Panel.Tests.Unit/Panel.Tests.Unit.csproj" />
+    <Project Path="tests/TopicMonitor.Tests.Integration/TopicMonitor.Tests.Integration.csproj" />
+    <Project Path="tests/TopicMonitor.Tests.Unit/TopicMonitor.Tests.Unit.csproj" />
   </Folder>
 </Solution>

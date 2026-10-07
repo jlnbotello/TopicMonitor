@@ -1,10 +1,10 @@
 # Writing a client
 
-`Panel.Client` wraps the gRPC `TopicService` so a caller never touches streaming types, reconnect logic, or
+`TopicMonitor.Client` wraps the gRPC `TopicService` so a caller never touches streaming types, reconnect logic, or
 `catalog_version` bookkeeping directly — the WPF viewer and the integration test suite are both just
 callers of `PanelClient`, nothing more privileged. This doc is everything you need to build a third one.
 
-Read `src/Panel.Client/PanelClient.cs` directly alongside this — it's ~220 lines and every member below is
+Read `src/TopicMonitor.Client/PanelClient.cs` directly alongside this — it's ~220 lines and every member below is
 there verbatim.
 
 ## Connect, describe, subscribe
@@ -53,8 +53,8 @@ unbounded, so don't rely on it for anything beyond "the recent past for a UI."
 
 ## Reading a value out of `ClientValue`
 
-`Panel.Client` has no dependency on `Panel.Core`, so values come back as `ClientValue`, not
-`Panel.Core.Value` — same shape, different type:
+`TopicMonitor.Client` has no dependency on `TopicMonitor.Core`, so values come back as `ClientValue`, not
+`TopicMonitor.Core.Value` — same shape, different type:
 
 ```csharp
 switch (state.Value.Kind)

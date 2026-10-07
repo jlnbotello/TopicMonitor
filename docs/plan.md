@@ -1,4 +1,4 @@
-# Panel Monitor – Implementation Plan v1
+# Topic Monitor – Implementation Plan v1
 
 *As of 2026-10-06*
 
@@ -47,28 +47,28 @@ flowchart LR
   bus --> hist["History buffer"]
   bus --> grpc["gRPC TopicService"]
   hist --> grpc
-  grpc --> client["Panel.Client"]
+  grpc --> client["TopicMonitor.Client"]
   client --> viewer["WPF timeline viewer"]
   layout["layout.yaml"] <--> viewer
   client --> tests["Integration tests"]
 ```
 
-Only the file source is replaced when a camera source arrives. The viewer and the integration tests share `Panel.Client`, so a green test means the viewer receives the same data.
+Only the file source is replaced when a camera source arrives. The viewer and the integration tests share `TopicMonitor.Client`, so a green test means the viewer receives the same data.
 
 | Project | Content | Depends on |
 |---|---|---|
-| `Panel.Contracts` | `.proto` files, generated C# types | – |
-| `Panel.Core` | Topic bus, descriptors, samples, publish policies, history, validity | – |
-| `Panel.Processors` | Color classifier, blink detector, text stabilizer | Core |
-| `Panel.Sources.File` | Scenario parser, expander, replayer, file watcher | Core |
-| `Panel.Server` | Host: Kestrel, gRPC services, configuration | Core, Processors, Sources.File, Contracts |
-| `Panel.Client` | Catalog, subscription, state store, history, reconnect, time conversion | Contracts |
-| `Panel.Viewer.Layout` | YAML model, template expansion, style resolution, save | – |
-| `Panel.Viewer.Wpf` | Timeline control, lane renderers, interaction | Client, Viewer.Layout |
-| `Panel.Tests.Unit` | Parser, expander, bus, processors, state store, layout | all non-GUI projects |
-| `Panel.Tests.Integration` | Real Kestrel on localhost, test client, latency suite | Server, Client |
+| `TopicMonitor.Contracts` | `.proto` files, generated C# types | – |
+| `TopicMonitor.Core` | Topic bus, descriptors, samples, publish policies, history, validity | – |
+| `TopicMonitor.Processors` | Color classifier, blink detector, text stabilizer | Core |
+| `TopicMonitor.Sources.File` | Scenario parser, expander, replayer, file watcher | Core |
+| `TopicMonitor.Server` | Host: Kestrel, gRPC services, configuration | Core, Processors, Sources.File, Contracts |
+| `TopicMonitor.Client` | Catalog, subscription, state store, history, reconnect, time conversion | Contracts |
+| `TopicMonitor.Viewer.Layout` | YAML model, template expansion, style resolution, save | – |
+| `TopicMonitor.Viewer.Wpf` | Timeline control, lane renderers, interaction | Client, Viewer.Layout |
+| `TopicMonitor.Tests.Unit` | Parser, expander, bus, processors, state store, layout | all non-GUI projects |
+| `TopicMonitor.Tests.Integration` | Real Kestrel on localhost, test client, latency suite | Server, Client |
 
-`Panel.Viewer.Layout` has no WPF dependency, so layout logic is unit-testable.
+`TopicMonitor.Viewer.Layout` has no WPF dependency, so layout logic is unit-testable.
 
 ## 4. Scenario file (`.scn`)
 
@@ -233,7 +233,7 @@ message TimeReply { int64 server_mono = 1; int64 server_utc_us = 2; int64 mono_f
 - A scenario reload that changes topics bumps `catalog_version`; clients call `Describe()` again.
 - Keepalive pings detect dead clients within seconds.
 
-## 7. Client library (`Panel.Client`)
+## 7. Client library (`TopicMonitor.Client`)
 
 - **Connect:** `Describe()`, then `Subscribe()` with patterns and delivery mode.
 - **State store:** value, confidence, validity and timestamps per topic; one change event per sample batch.
@@ -375,9 +375,9 @@ Tooling: xUnit, Shouldly, `Microsoft.Extensions.TimeProvider.Testing`, HdrHistog
 
 **After v1**
 
-- `Panel.Sources.Camera`: a camera source producing `led.N.raw` and `display.lineN.raw`.
+- `TopicMonitor.Sources.Camera`: a camera source producing `led.N.raw` and `display.lineN.raw`.
 - Camera-parameter RPCs with write authorization.
-- Pattern and measurement library on top of `Panel.Client`.
+- Pattern and measurement library on top of `TopicMonitor.Client`.
 - TLS and authentication; remote clock sync enabled.
 - Windows Service installation.
 
@@ -393,6 +393,6 @@ Tooling: xUnit, Shouldly, `Microsoft.Extensions.TimeProvider.Testing`, HdrHistog
 
 **Open points — resolved (2026-10-06)**
 
-1. Saving from the GUI: hand-written comments and formatting in `layout.yaml` must survive. `Panel.Viewer.Layout` saves via a targeted text patch (locate the touched node's line/column with YamlDotNet's `RepresentationModel`, then rewrite only that key's text in place) instead of a full re-serialize, so untouched lines — including comments — are byte-for-byte unchanged.
+1. Saving from the GUI: hand-written comments and formatting in `layout.yaml` must survive. `TopicMonitor.Viewer.Layout` saves via a targeted text patch (locate the touched node's line/column with YamlDotNet's `RepresentationModel`, then rewrite only that key's text in place) instead of a full re-serialize, so untouched lines — including comments — are byte-for-byte unchanged.
 2. Missing layout: yes, auto-generate. On connect, any catalog topic with no matching lane gets one appended using its type's default renderer; this happens in-memory in the viewer and is only persisted to `layout.yaml` if the user triggers a save.
 3. Color classifier k: default k = 2, as already used in the worked example (section 5) and the delay test (section 9).

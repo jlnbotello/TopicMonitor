@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.4" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" Version="8.10.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="Shouldly" Version="4.2.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\TopicMonitor.Core\TopicMonitor.Core.csproj" />
+    <ProjectReference Include="..\..\src\TopicMonitor.Processors\TopicMonitor.Processors.csproj" />
+    <ProjectReference Include="..\..\src\TopicMonitor.Sources.File\TopicMonitor.Sources.File.csproj" />
+    <ProjectReference Include="..\..\src\TopicMonitor.Client\TopicMonitor.Client.csproj" />
+    <ProjectReference Include="..\..\src\TopicMonitor.Viewer.Layout\TopicMonitor.Viewer.Layout.csproj" />
+    <ProjectReference Include="..\..\src\TopicMonitor.Contracts\TopicMonitor.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>
