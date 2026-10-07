@@ -4,7 +4,7 @@ using Shouldly;
 namespace TopicMonitor.Tests.Integration;
 
 /// <summary>
-/// Reproduces plan section 9's own worked example verbatim (scenario text and final assertions), end to
+/// Reproduces own worked example verbatim (scenario text and final assertions), end to
 /// end: file -> raw `led.1.raw` samples -> color classifier -> gRPC -> real <c>PanelClient</c>. This is the
 /// plan's explicit statement of "color classifier k=2 means one sample of delay" as an observable
 /// end-to-end behavior (not just something the processor's own unit tests cover in isolation).

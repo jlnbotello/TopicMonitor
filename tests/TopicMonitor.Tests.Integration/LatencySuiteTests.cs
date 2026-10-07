@@ -14,12 +14,12 @@ using Xunit.Abstractions;
 namespace TopicMonitor.Tests.Integration;
 
 /// <summary>
-/// Plan section 9's "Latency suite (real time, separate category)" and section 10's P7 exit criterion
+/// "Latency suite (real time, separate category)" and section 10's P7 exit criterion
 /// ("Latency suite, slow client, GC logging | p99.9 and max under 100 ms").
 ///
 /// <para>
 /// <b>Not part of the default <c>dotnet test</c> run.</b> This suite runs in real wall-clock time (no
-/// <c>FakeTimeProvider</c>) for tens of seconds, which is exactly what plan section 9 means by "real time,
+/// <c>FakeTimeProvider</c>) for tens of seconds, which is exactly what means by "real time,
 /// separate category." <c>TopicMonitor.Tests.Integration.csproj</c> sets the MSBuild property
 /// <c>VSTestTestCaseFilter</c> to <c>Category!=Latency</c>, which <c>dotnet test</c> applies by default
 /// whenever no <c>--filter</c> is given on the command line (an explicit <c>--filter</c> is passed through
@@ -28,7 +28,7 @@ namespace TopicMonitor.Tests.Integration;
 /// </para>
 ///
 /// <para>
-/// Judgment calls made here, against plan section 9's load spec ("20 Hz, 32 LEDs with blinking, 2 lossless
+/// Judgment calls made here, load spec ("20 Hz, 32 LEDs with blinking, 2 lossless
 /// clients plus 1 slow client, 10 000 batches"):
 /// </para>
 /// <list type="bullet">
@@ -48,7 +48,7 @@ namespace TopicMonitor.Tests.Integration;
 /// while keeping the whole test comfortably under 2 minutes.
 /// </item>
 /// <item>
-/// <b>Slow client</b>: aims at tripping the Lossless disconnect-and-resync path (plan section 5: a Lossless
+/// <b>Slow client</b>: aims at tripping the Lossless disconnect-and-resync path (a Lossless
 /// subscriber that falls behind the server's 1024-sample bounded queue is disconnected with a resync code -
 /// <c>StatusCode.Aborted</c>, see <c>TopicGrpcService.Subscribe</c>) rather than merely throttled just below
 /// that line - the more interesting reading of "1 slow client" for a backpressure test. It reads one batch
@@ -278,10 +278,10 @@ public class LatencySuiteTests
     }
 
     /// <summary>
-    /// Converts <paramref name="client"/>'s recorded <c>recv - t_processed</c> samples (plan section 7) from
-    /// ticks to real milliseconds via <paramref name="tickFrequency"/> (plan section 7's "same machine uses
+    /// Converts <paramref name="client"/>'s recorded <c>recv - t_processed</c> samples from
+    /// ticks to real milliseconds via <paramref name="tickFrequency"/> ("same machine uses
     /// server timestamps directly," section 2's QPC time base), feeds them into an
-    /// <see cref="LongHistogram"/> in nanoseconds, and asserts plan section 9/10's "p99.9 and max of
+    /// <see cref="LongHistogram"/> in nanoseconds, and asserts "p99.9 and max of
     /// recv - t_processed under 100 ms for the fast clients."
     /// </summary>
     private void AssertFastClient(string label, PanelClient client, long tickFrequency)
@@ -304,14 +304,14 @@ public class LatencySuiteTests
 
         _output.WriteLine($"{label}: n={samples.Count} p50={p50Ms:F2}ms p99.9={p999Ms:F2}ms max={maxMs:F2}ms");
 
-        p999Ms.ShouldBeLessThan(100.0, $"{label}: p99.9 latency {p999Ms:F2}ms exceeds the 100ms bar (plan section 9/10)");
-        maxMs.ShouldBeLessThan(100.0, $"{label}: max latency {maxMs:F2}ms exceeds the 100ms bar (plan section 9/10)");
+        p999Ms.ShouldBeLessThan(100.0, $"{label}: p99.9 latency {p999Ms:F2}ms exceeds the 100ms bar");
+        maxMs.ShouldBeLessThan(100.0, $"{label}: max latency {maxMs:F2}ms exceeds the 100ms bar");
     }
 
     /// <summary>
-    /// Builds an in-memory `.scn` scenario (plan section 4 grammar) with <paramref name="ledCount"/> LEDs at
+    /// Builds an in-memory `.scn` scenario with <paramref name="ledCount"/> LEDs at
     /// <paramref name="rateHz"/>, each blinking indefinitely between a reference color (cycling
-    /// red/green/yellow, plan section 5's worked example references) and off, each at a slightly different
+    /// red/green/yellow, worked example references) and off, each at a slightly different
     /// frequency so LED transitions - and therefore color-classifier/blink-detector work - spread across
     /// ticks rather than all landing on the same one.
     /// </summary>

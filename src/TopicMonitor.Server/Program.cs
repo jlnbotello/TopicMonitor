@@ -18,7 +18,7 @@ app.Run();
 public partial class Program
 {
     /// <summary>
-    /// The server's composition root (plan sections 5 "Server internals", 6 "gRPC API v1", 7's
+    /// The server's composition root ("Server internals", 6 "gRPC API v1", 7's
     /// server-side counterpart, and 9 "real Kestrel on a random localhost port"): one singleton
     /// <see cref="TopicBus"/>, the scenario file source feeding it, the three v1 processors consuming it,
     /// and the gRPC service exposing it.
@@ -26,7 +26,7 @@ public partial class Program
     public static WebApplication CreateApp(string[] args) => CreateApp(args, configureServices: null);
 
     /// <summary>
-    /// Testability hook (added for <c>TopicMonitor.Tests.Integration</c>, plan section 9): identical to
+    /// Testability hook (added for <c>TopicMonitor.Tests.Integration</c>, ): identical to
     /// <see cref="CreateApp(string[])"/> except <paramref name="configureServices"/>, when given, runs
     /// immediately before <c>builder.Build()</c> - i.e. after every registration above, so e.g.
     /// <c>services.AddSingleton&lt;TimeProvider&gt;(fakeTimeProvider)</c> is the *last* registration for
@@ -40,7 +40,7 @@ public partial class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        // Keepalive (plan section 6: "Keepalive pings detect dead clients within seconds"). HTTP/2 PING
+        // Keepalive ("Keepalive pings detect dead clients within seconds"). HTTP/2 PING
         // frames are sent after 10s of connection inactivity; if no ack arrives within a further 5s,
         // Kestrel tears the connection down. Worst case a fully dead peer (process killed, cable pulled,
         // network partition) is detected in ~15s; a merely slow-but-alive client still acks well within

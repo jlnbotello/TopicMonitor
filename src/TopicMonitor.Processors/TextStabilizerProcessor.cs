@@ -4,7 +4,7 @@ using TopicMonitor.Processors.Internal;
 namespace TopicMonitor.Processors;
 
 /// <summary>
-/// "Text stabilizer" (plan section 5): subscribes to raw `display.lineN.raw` string topics matching
+/// "Text stabilizer": subscribes to raw `display.lineN.raw` string topics matching
 /// <see cref="TextStabilizerConfig.Input"/>, and for each one registers and publishes a derived
 /// `display.lineN.text` string topic (name derived by replacing a trailing ".raw" with ".text").
 ///

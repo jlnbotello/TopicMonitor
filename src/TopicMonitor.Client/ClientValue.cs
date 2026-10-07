@@ -17,7 +17,7 @@ public enum ClientValueKind
 /// <summary>
 /// A small tagged union holding one sample's payload, translated from the proto <c>TopicValue</c> oneof.
 /// <para>
-/// <c>TopicMonitor.Client</c> has no project reference to <c>TopicMonitor.Core</c> (see plan section 3's dependency
+/// <c>TopicMonitor.Client</c> has no project reference to <c>TopicMonitor.Core</c> (dependency
 /// table), so this stands in for <c>TopicMonitor.Core.Value</c> here instead of reusing it. Enum values are kept
 /// as their wire index (<see cref="AsEnumIndex"/>); resolving an index to its name requires the catalog
 /// (<c>TopicInfo.EnumValues</c>), which this type intentionally knows nothing about.

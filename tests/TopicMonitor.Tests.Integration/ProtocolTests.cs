@@ -6,15 +6,14 @@ using Shouldly;
 namespace TopicMonitor.Tests.Integration;
 
 /// <summary>
-/// Plan section 9's "Protocol" bullet: snapshot on connect, no seq gaps under normal operation, Lossless
+/// "Protocol" bullet: snapshot on connect, no seq gaps under normal operation, Lossless
 /// vs Latest behavior under a subscriber that falls behind, and - this phase's (P3) named exit criterion,
-/// plan section 10 - the Lossless reconnect test.
+/// - the Lossless reconnect test.
 /// </summary>
 public class ProtocolTests
 {
     /// <summary>
-    /// A fresh <c>Subscribe(from_time=...)</c> call's first batch is the replay snapshot (plan section 6's
-    /// <c>is_snapshot</c> rule: true only for the first batch of a call that requested a replay), and the
+    /// A fresh <c>Subscribe(from_time=...)</c> call's first batch is the replay snapshot    /// <c>is_snapshot</c> rule: true only for the first batch of a call that requested a replay), and the
     /// replayed history is exactly the topic's past values - in order, at their real times - not polluted
     /// by the many unchanged-value ticks the `@topic ... policy=change` declaration filters out server-side.
     /// </summary>
@@ -136,7 +135,7 @@ public class ProtocolTests
 
     /// <summary>
     /// <see cref="TopicMonitor.Core.SubscriberOverflowException"/>, thrown when a Lossless subscriber's bounded
-    /// queue overflows (plan section 5), surfaces to a real gRPC client as an <see cref="RpcException"/>
+    /// queue overflows, surfaces to a real gRPC client as an <see cref="RpcException"/>
     /// with <see cref="StatusCode.Aborted"/> (see <c>TopicGrpcService.Subscribe</c>'s catch clause) - the
     /// raw protocol-level half of this phase's exit criterion, isolated from <c>PanelClient</c>'s own
     /// reconnect logic (covered end-to-end by <see cref="A_lossless_subscriber_that_falls_behind_resyncs_and_recovers"/>
@@ -196,7 +195,7 @@ public class ProtocolTests
     }
 
     /// <summary>
-    /// <b>P3 exit criterion (plan section 10): "Lossless reconnect test green."</b> A real
+    /// <b>P3 exit criterion: "Lossless reconnect test green."</b> A real
     /// <see cref="PanelClient"/>, subscribed Lossless, falls behind its bounded queue (same overflow trigger
     /// as above), gets disconnected (Aborted), and - entirely through its own already-implemented
     /// reconnect logic (<c>PanelClient.RunReadLoopAsync</c>: catch the fault, re-<c>Describe</c>, resubscribe

@@ -4,7 +4,7 @@ using Shouldly;
 namespace TopicMonitor.Tests.Unit.Layout;
 
 /// <summary>
-/// Plan.md section 11, open point 1: GUI saves must preserve hand-written comments and
+/// , open point 1: GUI saves must preserve hand-written comments and
 /// formatting. These tests assert that a lane/style change patches only the touched scalar and
 /// leaves every other line of the file -- including every comment -- byte-identical.
 /// </summary>

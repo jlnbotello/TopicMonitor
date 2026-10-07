@@ -5,15 +5,15 @@ namespace TopicMonitor.Client;
 public readonly record struct LatencySample(long RecvTimestamp, long LatencyTicks);
 
 /// <summary>
-/// Records <c>recv - t_processed</c> per batch (plan section 7: "Latency probe: records recv - t_processed
+/// Records <c>recv - t_processed</c> per batch ("Latency probe: records recv - t_processed
 /// per batch"). On the same machine, the server's <c>t_processed</c> and the client's
-/// <c>TimeProvider.GetTimestamp()</c> share one QPC clock (plan section 2: "comparable across processes on
+/// <c>TimeProvider.GetTimestamp()</c> share one QPC clock ("comparable across processes on
 /// one machine"), so this is a direct subtraction with no offset — see <see cref="TimeSync"/> for the
 /// (currently informational) remote-client offset-estimation path.
 /// <para>
 /// Keeps a bounded ring buffer (default 4096 samples) rather than growing without bound; at the plan's
 /// example 20 Hz that is well over three minutes of history, comfortably more than the 10 s window the
-/// status bar needs (plan section 8: "live recv - t_processed (p50 and max over 10 s)").
+/// status bar needs ("live recv - t_processed (p50 and max over 10 s)").
 /// </para>
 /// </summary>
 public sealed class LatencyProbe

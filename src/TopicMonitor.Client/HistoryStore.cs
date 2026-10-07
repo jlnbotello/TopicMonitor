@@ -11,8 +11,8 @@ public sealed record HistoryPoint(
     long? EvidenceSince);
 
 /// <summary>
-/// Per-topic time series so a UI can show "the last N seconds" (plan section 8's lane window) without
-/// re-querying the server (plan section 7: "History: per-topic time series for the visible window and
+/// Per-topic time series so a UI can show "the last N seconds" without
+/// re-querying the server ("History: per-topic time series for the visible window and
 /// beyond").
 /// <para>
 /// Retention policy: a bounded count per topic (default 5000 points) rather than a wall-clock window. A

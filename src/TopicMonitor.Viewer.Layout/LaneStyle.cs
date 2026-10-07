@@ -5,7 +5,7 @@ namespace TopicMonitor.Viewer.Layout;
 /// <c>red: { fill: red }</c> or <c>"@low": { hatch: true }</c>.
 /// Every field is optional: an unset field means "do not change this aspect" when the style
 /// is overlaid onto another one (see <see cref="OverlayWith"/> and the 3-step resolution order
-/// in plan.md section 8).
+/// ).
 /// </summary>
 public sealed record LaneStyle(string? Fill = null, string? Border = null, bool? Hatch = null)
 {

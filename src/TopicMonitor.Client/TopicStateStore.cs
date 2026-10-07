@@ -8,7 +8,7 @@ namespace TopicMonitor.Client;
 /// (<c>TopicValue.Topic</c> / <c>TopicInfo.Id</c>). Thread-safe: <see cref="Apply"/> is called from the
 /// background read loop while a UI thread reads <see cref="Get"/>/<see cref="Snapshot"/>.
 /// <para>
-/// An empty <c>SampleBatch.Values</c> is a tick (plan section 5: "empty Values = tick") and leaves existing
+/// An empty <c>SampleBatch.Values</c> is a tick ("empty Values = tick") and leaves existing
 /// state untouched.
 /// </para>
 /// </summary>

@@ -4,10 +4,10 @@ using Shouldly;
 namespace TopicMonitor.Tests.Integration;
 
 /// <summary>
-/// Plan section 9's "Invalidation" bullet: stopping a source turns its topics <see cref="Validity.Invalid"/>
+/// "Invalidation" bullet: stopping a source turns its topics <see cref="Validity.Invalid"/>
 /// at the client. Drives <see cref="TopicMonitor.Sources.File.ScenarioFileSource.Stop"/> directly (resolved from
 /// the real server's DI container via <see cref="TestHost.ScenarioSource"/>) rather than tearing down the
-/// whole host, since that's the actual production hook for "a source that stops" (plan section 5) -
+/// whole host, since that's the actual production hook for "a source that stops" -
 /// <c>ScenarioLoaderHostedService.StopAsync</c> calls the very same method on ordinary host shutdown.
 /// </summary>
 public class InvalidationTests

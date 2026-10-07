@@ -3,7 +3,7 @@ using TopicMonitor.Core;
 namespace TopicMonitor.Processors;
 
 /// <summary>
-/// "Blink detector" (plan section 5): subscribes to derived `led.N.color` enum topics matching
+/// "Blink detector": subscribes to derived `led.N.color` enum topics matching
 /// <see cref="BlinkDetectorConfig.Input"/> (normally the color classifier's output), and for each one
 /// registers and publishes a derived `led.N.state` enum topic (off/steady/blinking) and a derived
 /// `led.N.freq` float topic (Hz). Names are derived by replacing a trailing ".color" with ".state"/".freq".

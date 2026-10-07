@@ -7,7 +7,7 @@ namespace TopicMonitor.Sources.File;
 /// <see cref="TryLoad"/> is the pure, filesystem-free "parse + swap" path (unit-testable without a real OS file
 /// event); <see cref="WatchFile"/> is the thin wrapper that drives it from real file-change notifications. On a
 /// parse or validation error for a new file, whatever scenario was previously running keeps running untouched
-/// (plan section 4: "the server keeps the last valid scenario running").
+/// ("the server keeps the last valid scenario running").
 /// </summary>
 public sealed class ScenarioFileSource : IDisposable
 {

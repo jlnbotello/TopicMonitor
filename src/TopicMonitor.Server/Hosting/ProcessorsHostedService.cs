@@ -5,7 +5,7 @@ using TopicMonitor.Processors;
 namespace TopicMonitor.Server.Hosting;
 
 /// <summary>
-/// Starts the three v1 processors (plan section 5, "Processors v1") once the scenario file's initial load
+/// Starts the three v1 processors once the scenario file's initial load
 /// attempt has completed (see <see cref="ScenarioReadySignal"/>), and keeps them running until the host
 /// shuts down.
 ///

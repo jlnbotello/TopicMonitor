@@ -6,7 +6,7 @@ namespace TopicMonitor.Viewer.Layout;
 /// Finds the YAML mapping node for a given lane by its literal <c>topic:</c> value, searching
 /// both <c>templates</c> lane lists and groups' direct <c>lanes</c> lists. Used by
 /// <see cref="LayoutDocument"/> to locate the exact node to patch when saving a lane change
-/// (plan.md section 11, open point 1: "locate that specific scalar/mapping node by its
+/// (open point 1: "locate that specific scalar/mapping node by its
 /// already-known position in the document").
 /// </summary>
 internal static class LayoutNodeLocator

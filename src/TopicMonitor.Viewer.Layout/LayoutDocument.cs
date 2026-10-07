@@ -8,7 +8,7 @@ namespace TopicMonitor.Viewer.Layout;
 /// text with its <see cref="YamlDotNet.RepresentationModel"/> node positions, so that targeted
 /// edits (<see cref="WithLaneRenderer"/>, <see cref="WithStyleField"/>) can patch only the
 /// touched value and leave the rest of the file — including comments — byte-for-byte unchanged
-/// (plan.md section 11, open point 1).
+///.
 /// </summary>
 public sealed class LayoutDocument
 {

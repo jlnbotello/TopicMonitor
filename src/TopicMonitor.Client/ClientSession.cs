@@ -18,12 +18,12 @@ public sealed class CatalogVersionChangedEventArgs : EventArgs
 }
 
 /// <summary>
-/// The network-free core of the client protocol described in plan sections 7 and 9: applies incoming
+/// The network-free core of the client protocol: applies incoming
 /// <c>SampleBatch</c>es to the state store, history and latency probe, detects per-source <c>seq</c> gaps,
 /// and detects <c>catalog_version</c> changes.
 /// <para>
 /// This type never touches gRPC — <see cref="Ingest"/> takes a plain proto <c>SampleBatch</c>, so the
-/// "client state store: deltas, gap detection, catalog change" unit tests (plan section 9) can drive it
+/// "client state store: deltas, gap detection, catalog change" unit tests can drive it
 /// directly with synthetic messages. <see cref="PanelClient"/> is the thin network-facing wrapper that
 /// feeds this type from a live stream and reacts to its events by re-<c>Describe()</c>ing and
 /// re-<c>Subscribe</c>ing.
@@ -42,7 +42,7 @@ public sealed class ClientSession
 
     /// <summary>Raised once per applied batch, after state/history/latency have all been updated. A WPF
     /// viewer marshals this onto its dispatcher before touching UI state (documented choice: a plain
-    /// multicast <see cref="EventHandler{TEventArgs}"/> carrying the raw batch, per plan section 7's "one
+    /// multicast <see cref="EventHandler{TEventArgs}"/> carrying the raw batch, "one
     /// change event per sample batch" — callers needing the full picture read it back from
     /// <see cref="State"/>/<see cref="History"/>).</summary>
     public event EventHandler<SampleBatch>? SampleApplied;
@@ -64,7 +64,7 @@ public sealed class ClientSession
     }
 
     /// <summary>The last successfully applied batch's <c>t</c> — the resume point for <c>from_time</c> on
-    /// reconnect (plan section 7: "Reconnect: resumes with from_time = last received t").</summary>
+    /// reconnect ("Reconnect: resumes with from_time = last received t").</summary>
     public long? LastReceivedT => _lastReceivedT;
 
     /// <summary>Applies one received batch: detects catalog/seq anomalies, updates state/history, records a

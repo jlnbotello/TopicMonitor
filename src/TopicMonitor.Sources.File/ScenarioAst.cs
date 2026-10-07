@@ -1,6 +1,6 @@
 namespace TopicMonitor.Sources.File;
 
-/// <summary>Abstract syntax tree for the `.scn` scenario file format (plan section 4).</summary>
+/// <summary>Abstract syntax tree for the `.scn` scenario file format.</summary>
 
 public enum ScenarioTimeUnit
 {

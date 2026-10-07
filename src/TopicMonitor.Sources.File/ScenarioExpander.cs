@@ -90,7 +90,7 @@ public sealed class ScenarioExpander
         }
     }
 
-    /// <summary>Rounds an absolute time (ms) up to the next source tick index (plan section 4: "quantized up to the next source tick").</summary>
+    /// <summary>Rounds an absolute time (ms) up to the next source tick index ("quantized up to the next source tick").</summary>
     private static long QuantizeToTick(long absMs, double tickPeriodMs)
     {
         const double epsilon = 1e-6;

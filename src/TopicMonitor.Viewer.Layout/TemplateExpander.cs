@@ -2,7 +2,7 @@ namespace TopicMonitor.Viewer.Layout;
 
 /// <summary>
 /// Resolves <c>groups</c> + <c>templates</c> into a flat list of concrete lanes
-/// (plan.md section 8: "GUI changes are saved back to the file", template usage example).
+/// ("GUI changes are saved back to the file", template usage example).
 /// </summary>
 public static class TemplateExpander
 {

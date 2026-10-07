@@ -148,7 +148,7 @@ public class ColorClassifierProcessorTests
         samples[0].Values[0].EvidenceSince.ShouldBe(t0);
 
         // The output sample's own T is the k-th (triggering/latest) supporting sample's time (t2), while
-        // EvidenceSince is the first of the two supporting samples (t1) - plan section 5.
+        // EvidenceSince is the first of the two supporting samples (t1) - 
         samples[1].T.ShouldBe(t2);
         samples[1].Values[0].Value.AsEnum.ShouldBe("red");
         samples[1].Values[0].EvidenceSince.ShouldBe(t1);

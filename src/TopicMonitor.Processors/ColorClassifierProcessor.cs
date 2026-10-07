@@ -4,7 +4,7 @@ using TopicMonitor.Processors.Internal;
 namespace TopicMonitor.Processors;
 
 /// <summary>
-/// "Color classifier" (plan section 5): subscribes to raw `led.N.raw` vec topics matching
+/// "Color classifier": subscribes to raw `led.N.raw` vec topics matching
 /// <see cref="ColorClassifierConfig.Input"/>, and for each one registers and publishes a derived
 /// `led.N.color` enum topic (name derived by replacing a trailing ".raw" with ".color").
 ///

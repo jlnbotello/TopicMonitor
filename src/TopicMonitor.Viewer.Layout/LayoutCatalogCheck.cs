@@ -1,6 +1,6 @@
 namespace TopicMonitor.Viewer.Layout;
 
-/// <summary>Result of checking a layout against the server catalog (plan section 8: "missing or unused topics are listed").</summary>
+/// <summary>Result of checking a layout against the server catalog ("missing or unused topics are listed").</summary>
 public sealed record LayoutCatalogCheckResult(IReadOnlyList<string> MissingInCatalog, IReadOnlyList<string> UnusedInLayout)
 {
     public bool IsClean => MissingInCatalog.Count == 0 && UnusedInLayout.Count == 0;

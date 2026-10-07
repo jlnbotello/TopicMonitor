@@ -4,7 +4,7 @@ using Shouldly;
 namespace TopicMonitor.Tests.Unit.Layout;
 
 /// <summary>
-/// Mirrors plan.md section 4's scenario-file semantics ("Parse errors report line and column;
+/// Mirrors scenario-file semantics ("Parse errors report line and column;
 /// the server keeps the last valid scenario running"), applied to layout loading (section 8).
 /// </summary>
 public class LayoutLoaderTests

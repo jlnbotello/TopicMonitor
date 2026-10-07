@@ -11,7 +11,7 @@ using TopicMonitor.Sources.File;
 namespace TopicMonitor.Tests.Integration;
 
 /// <summary>
-/// Shared integration test harness (plan section 9: "real Kestrel on a random localhost port"). Starts the
+/// Shared integration test harness ("real Kestrel on a random localhost port"). Starts the
 /// real <c>TopicMonitor.Server</c> composition root (<see cref="Program.CreateApp(string[], Action{IServiceCollection}?)"/>
 /// - real Kestrel, real <c>TopicBus</c>, real scenario load/watch, real processors) against an inline
 /// scenario written to a throwaway temp file, and hands back a thin API for connecting real
@@ -24,7 +24,7 @@ namespace TopicMonitor.Tests.Integration;
 /// replayer, the blink detector) via the <c>configureServices</c> hook added to <c>Program.CreateApp</c>
 /// for exactly this purpose - verified empirically (see the hook's doc comment) to be the registration that
 /// wins when anything later resolves <c>TimeProvider</c>. <see cref="AdvanceAsync"/> drives scenario replay
-/// deterministically, matching plan section 9's worked example ("test mode: time driven by the test").</item>
+/// deterministically, worked example ("test mode: time driven by the test").</item>
 /// <item><c>useFakeTime: false</c> leaves the server on the real <c>TimeProvider.System</c> (as in
 /// production and in <c>ServerSmokeTests</c>); used by tests that drive a real <see cref="FileSystemWatcher"/>
 /// (hot reload) where fake time buys nothing and a short real-time poll is simpler and matches the existing
@@ -169,7 +169,7 @@ public sealed class TestHost : IAsyncDisposable
     public double ToMs(long t) => (t - _baselineTimestamp) * 1000.0 / Time.TimestampFrequency;
 
     /// <summary>The real <see cref="ScenarioFileSource"/> singleton driving replay, for tests that need to
-    /// trigger a server-side source stop directly (plan section 9's invalidation test) without tearing down
+    /// trigger a server-side source stop directly without tearing down
     /// the whole host.</summary>
     public ScenarioFileSource ScenarioSource => App.Services.GetRequiredService<ScenarioFileSource>();
 

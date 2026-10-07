@@ -1,7 +1,7 @@
 namespace TopicMonitor.Viewer.Layout;
 
 /// <summary>
-/// Style resolution in the exact order from plan.md section 8:
+/// Style resolution in the exact order:
 ///
 /// 1. Type default: renderer and neutral style.
 /// 2. Value rules from the layout, e.g. `red` -&gt; red fill, `blinking` -&gt; dashed border.

@@ -4,7 +4,7 @@ using Shouldly;
 namespace TopicMonitor.Tests.Integration;
 
 /// <summary>
-/// Plan section 9's "Hot reload" bullet, driven by a real <see cref="FileSystemWatcher"/> against a real
+/// "Hot reload" bullet, driven by a real <see cref="FileSystemWatcher"/> against a real
 /// temp `.scn` file (no FakeTimeProvider needed here - the point under test is the watcher + parse/swap
 /// path, not scenario timing, so this uses real <see cref="TimeProvider.System"/> and real-time polling,
 /// matching the existing <c>ServerSmokeTests</c> smoke test's style).

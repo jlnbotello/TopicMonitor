@@ -12,7 +12,7 @@ there verbatim.
 ```csharp
 using var client = PanelClient.ConnectTo("http://127.0.0.1:5279"); // owns its channel; disposed with the client
 
-await client.DescribeAsync();                 // fetches + caches the catalog (client.Catalog)
+await client.DescribeAsync;                 // fetches + caches the catalog (client.Catalog)
 await client.SubscribeAsync(
     patterns: new[] { "*" },                  // glob patterns, e.g. "led.*.color"
     mode: DeliveryMode.Lossless,               // or DeliveryMode.Latest
@@ -20,7 +20,7 @@ await client.SubscribeAsync(
 ```
 
 `SubscribeAsync` starts a background read loop and returns immediately — don't await it expecting the
-stream to end; it runs until you call `StopSubscriptionAsync()` or dispose the client. Calling
+stream to end; it runs until you call `StopSubscriptionAsync` or dispose the client. Calling
 `SubscribeAsync` again (new patterns/mode) replaces the running subscription.
 
 **Lossless vs Latest**: `Lossless` buffers and guarantees delivery order, but a subscriber that falls too
@@ -96,7 +96,7 @@ whatever thread the read loop is running on, not the UI thread.
 - a transport fault or the server disconnecting a `Lossless` subscriber that fell behind, and
 - a detected `seq` gap (two batches from the same source where `seq` isn't `prev + 1`).
 
-Both resync the same way: re-`DescribeAsync()` (the catalog may have moved on while disconnected), then
+Both resync the same way: re-`DescribeAsync` (the catalog may have moved on while disconnected), then
 resubscribe with `fromTime` = the last sample's `t` you actually received, so you pick up exactly where you
 left off rather than missing or duplicating data. You don't need to write any of this — it's worth knowing
 about only so you're not surprised by a brief gap in `SampleReceived` during a real disconnect.
@@ -109,8 +109,8 @@ if (summary is { } s) Console.WriteLine($"p50 {s.P50Ticks} ticks, max {s.MaxTick
 ```
 
 This is `recv - t_processed` per batch — valid as a direct subtraction only because client and server
-share one clock domain on the same machine (plan section 7). `GetTimeAsync()` /
-`EstimateTimeOffsetAsync()` exist for a future remote client that needs an offset estimate instead; don't
+share one clock domain on the same machine. `GetTimeAsync` /
+`EstimateTimeOffsetAsync` exist for a future remote client that needs an offset estimate instead; don't
 use them on localhost, they're not needed there.
 
 ## A minimal complete example

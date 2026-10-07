@@ -1,10 +1,10 @@
 namespace TopicMonitor.Tests.Unit.Layout;
 
-/// <summary>Shared sample layout text used across the layout-model tests (mirrors plan.md section 8's example).</summary>
+/// <summary>Shared sample layout text used across the layout-model tests (example).</summary>
 internal static class LayoutFixtures
 {
     /// <summary>
-    /// The exact example from plan.md section 8, with a few hand-written comments added so that
+    /// The exact example , with a few hand-written comments added so that
     /// save tests can assert comments survive a targeted edit.
     /// </summary>
     public const string SampleWithComments = """

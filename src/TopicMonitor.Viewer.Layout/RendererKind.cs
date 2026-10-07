@@ -1,6 +1,6 @@
 namespace TopicMonitor.Viewer.Layout;
 
-/// <summary>The lane renderers from plan.md section 8.</summary>
+/// <summary>The lane renderers </summary>
 public enum RendererKind
 {
     Step,

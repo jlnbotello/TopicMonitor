@@ -1,7 +1,7 @@
 # Writing a new topic source
 
 A "source" is anything that registers topics on the bus and publishes `Sample`s to them — the scenario
-file reader (`TopicMonitor.Sources.File`) is one; a future camera reader (see `docs/plan.md` section 11)
+file reader (`TopicMonitor.Sources.File`) is one; a future hardware reader
 would be another. This doc covers the generic part: everything a source needs from `TopicMonitor.Core`,
 independent of where the data actually comes from.
 
@@ -20,7 +20,7 @@ public interface ITopicBus
     void Publish(Sample sample);
     void SetSourceInvalid(SourceId source);
     IAsyncEnumerable<Sample> Subscribe(TopicFilter filter, long? fromTime, DeliveryMode mode, CancellationToken ct = default);
-    TopicCatalogSnapshot GetCatalog();
+    TopicCatalogSnapshot GetCatalog;
     TopicDescriptor GetDescriptor(TopicHandle handle);
     TopicHandle? TryGetHandle(string topicName);
 }
@@ -48,7 +48,7 @@ var handle = bus.Register(new TopicDescriptor("sensor.temp", TopicType.Float, Pr
 ```
 
 A name is already taken by someone else → `Register` throws `DuplicateTopicException`. Every topic has
-exactly one producer (plan section 4/5) — catch this and fail loudly rather than silently stealing the name.
+exactly one producer — catch this and fail loudly rather than silently stealing the name.
 
 **Publish policy** decides which values the bus actually keeps/forwards, independent of how often you
 publish: `Every` forwards everything, `OnChange` drops a value equal to the last one that got through,
@@ -63,9 +63,9 @@ public sealed record TopicValue(TopicHandle Topic, Value Value, float? Confidenc
 ```
 
 - `Source` is your producer's name, wrapped — `new SourceId("my-source")`.
-- `T`/`TPrev`/`TProcessed` are timestamps in `TimeProvider.GetTimestamp()`'s tick domain (QPC-equivalent;
+- `T`/`TPrev`/`TProcessed` are timestamps in `TimeProvider.GetTimestamp`'s tick domain (QPC-equivalent;
   see "Time base" below) — **not** wall-clock `DateTime`.
-- `Values` is every topic you own, every tick, even when nothing changed (plan section 5: "every source
+- `Values` is every topic you own, every tick, even when nothing changed ("every source
   tick produces a sample, even without changes" — the bus's publish policy is what trims this, not you).
 - An empty `Values` list is a bare tick (useful for keeping a shared time axis moving without any topic
   having a value yet).
@@ -77,9 +77,9 @@ public sealed record TopicValue(TopicHandle Topic, Value Value, float? Confidenc
 bus.Publish(new Sample(
     new SourceId("my-source"),
     Seq: ++seq,
-    T: timeProvider.GetTimestamp(),
+    T: timeProvider.GetTimestamp,
     TPrev: prevT,
-    TProcessed: timeProvider.GetTimestamp(), // no extra processing delay for a plain source
+    TProcessed: timeProvider.GetTimestamp, // no extra processing delay for a plain source
     Values: new[] { new TopicValue(handle, Value.OfFloat(reading), Confidence: null, Validity.Valid, EvidenceSince: null) }));
 ```
 
@@ -96,24 +96,24 @@ for the canonical example.
 ## 4. Stopping
 
 ```csharp
-public void Stop() => bus.SetSourceInvalid(new SourceId("my-source"));
+public void Stop => bus.SetSourceInvalid(new SourceId("my-source"));
 ```
 
-This marks every topic your producer owns as `Validity.Invalid` on the bus (plan section 5: "a source that
+This marks every topic your producer owns as `Validity.Invalid` on the bus ("a source that
 stops sets all its topics to Invalid") — call it from your shutdown path (an `IHostedService.StopAsync`, a
 `Dispose`, whatever fits).
 
 ## A minimal complete example
 
 ```csharp
-public sealed class RandomWalkSource : IDisposable
+public sealed class RandomWalkSource: IDisposable
 {
     private readonly ITopicBus _bus;
     private readonly TimeProvider _time;
     private readonly SourceId _source = new("randomwalk");
     private readonly TopicHandle _handle;
     private readonly ITimer _timer;
-    private readonly Random _rng = new();
+    private readonly Random _rng = new;
     private double _value;
     private long _prevT;
     private ulong _seq;
@@ -123,22 +123,22 @@ public sealed class RandomWalkSource : IDisposable
         _bus = bus;
         _time = time;
         _handle = bus.Register(new TopicDescriptor("demo.walk", TopicType.Float, Producer: _source.Value));
-        _prevT = time.GetTimestamp();
-        _timer = time.CreateTimer(_ => Tick(), null, period, period);
+        _prevT = time.GetTimestamp;
+        _timer = time.CreateTimer(_ => Tick, null, period, period);
     }
 
-    private void Tick()
+    private void Tick
     {
-        _value += _rng.NextDouble() - 0.5;
-        var t = _time.GetTimestamp();
+        _value += _rng.NextDouble - 0.5;
+        var t = _time.GetTimestamp;
         _bus.Publish(new Sample(_source, ++_seq, t, _prevT, t,
             new[] { new TopicValue(_handle, Value.OfFloat(_value), null, Validity.Valid, null) }));
         _prevT = t;
     }
 
-    public void Dispose()
+    public void Dispose
     {
-        _timer.Dispose();
+        _timer.Dispose;
         _bus.SetSourceInvalid(_source);
     }
 }

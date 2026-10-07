@@ -7,7 +7,7 @@ namespace TopicMonitor.Tests.Unit.Sources;
 
 /// <summary>
 /// End-to-end: a real <see cref="TopicBus"/> fed by <see cref="ScenarioFileSource"/>, driven tick-by-tick on a
-/// <see cref="FakeTimeProvider"/>, asserted against the `demo.scn` worked example from plan section 4 (noise
+/// <see cref="FakeTimeProvider"/>, asserted against the `demo.scn` worked example (noise
 /// omitted here so every value is exactly predictable).
 /// </summary>
 public class ScenarioReplayerEndToEndTests
@@ -111,7 +111,7 @@ public class ScenarioReplayerEndToEndTests
         Of(tick40, "led.3.raw").AsVec.ShouldBe(new[] { 230.0, 200.0, 20.0 });
         Of(tick40, "led.1.raw").AsVec.ShouldBe(new[] { 0.0, 0.0, 0.0 }); // (2000-1500)=500ms elapsed, phase 100 -> off half
 
-        // Every sample carries every declared topic, even unchanged ones (plan section 5: "every source tick
+        // Every sample carries every declared topic, even unchanged ones ("every source tick
         // produces a sample, even without changes" - policies on the bus, not the source, decide what's dropped).
         tick40.Values.Count.ShouldBe(5);
     }

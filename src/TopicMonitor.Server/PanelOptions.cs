@@ -1,7 +1,7 @@
 namespace TopicMonitor.Server;
 
 /// <summary>
-/// Server composition-root configuration (plan sections 2 "Decisions" and 5 "Server internals" /
+/// Server composition-root configuration ("Decisions" and 5 "Server internals" /
 /// "Processors v1": scenario file path, history retention, color classifier references). Bound from the
 /// "Panel" configuration section; every default below matches the plan's own worked example so
 /// `dotnet run` works with zero extra setup from a fresh clone.
@@ -16,12 +16,11 @@ public sealed class PanelOptions
     public string ScenarioPath { get; set; } = "examples/demo.scn";
 
     /// <summary>History buffer retention in seconds; null keeps <see cref="TopicMonitor.Core.TopicBus"/>'s own
-    /// default (5 minutes, plan section 5).</summary>
+    /// default (5 minutes, ).</summary>
     public double? HistoryRetentionSeconds { get; set; }
 
     /// <summary>
-    /// Named RGB reference colors for the color classifier, e.g. "red" -&gt; [240, 20, 20] (plan section 5's
-    /// worked example). Defaults to that same worked example so the shipped `examples/demo.scn` classifies
+    /// Named RGB reference colors for the color classifier, e.g. "red" -&gt; [240, 20, 20]    /// worked example). Defaults to that same worked example so the shipped `examples/demo.scn` classifies
     /// correctly with zero configuration.
     /// </summary>
     public Dictionary<string, double[]> ColorReferences { get; set; } = new()

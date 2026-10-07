@@ -8,7 +8,7 @@ using Shouldly;
 namespace TopicMonitor.Tests.Integration;
 
 /// <summary>
-/// Real-integration smoke test for `TopicMonitor.Server` (plan section 9: "real Kestrel on a random localhost
+/// Real-integration smoke test for `TopicMonitor.Server` ("real Kestrel on a random localhost
 /// port"): starts the actual composition root (<c>Program.CreateApp</c> - real Kestrel, real
 /// <c>TopicBus</c>, real scenario load of `examples/demo.scn`, real processors) on an ephemeral port,
 /// calls <c>Describe()</c> over a real gRPC channel, and asserts the catalog contains both raw topics
@@ -36,7 +36,7 @@ public class ServerSmokeTests
 
             // Raw topics are registered the instant the scenario loads; derived topics only appear once
             // the processors have classified at least one sample (color classifier's k=2 debounce, see
-            // plan section 5), which takes a handful of real 50ms source ticks. Both are asynchronous
+            // ), which takes a handful of real 50ms source ticks. Both are asynchronous
             // relative to this test, hence the short real-time poll loop rather than a single Describe().
             var expectedRaw = new[] { "led.1.raw", "led.2.raw", "led.3.raw", "display.line1.raw", "display.line2.raw" };
             var expectedDerived = new[] { "led.1.color", "led.2.color", "led.3.color", "display.line1.text" };

@@ -5,7 +5,7 @@ using TopicMonitor.Contracts;
 namespace TopicMonitor.Client;
 
 /// <summary>
-/// Top-level entry point for <c>TopicMonitor.Client</c> (plan section 7). Wraps a <see cref="GrpcChannel"/> +
+/// Top-level entry point for <c>TopicMonitor.Client</c>. Wraps a <see cref="GrpcChannel"/> +
 /// <c>TopicService.TopicServiceClient</c>, fetches and caches the catalog, and runs a background read loop
 /// that feeds a <see cref="ClientSession"/> (state store, history, latency probe) from the server's
 /// <c>Subscribe</c> stream — reconnecting on transport failure and resyncing on a detected seq gap or
@@ -101,7 +101,7 @@ public sealed class PanelClient : IAsyncDisposable
         await _grpc.GetTimeAsync(new TimeRequest(), cancellationToken: ct).ConfigureAwait(false);
 
     /// <summary>Single-sample round-trip offset estimate against the server's mono clock (see
-    /// <see cref="TimeSync"/>). Not needed on the same machine; wired up per plan section 7 for a future
+    /// <see cref="TimeSync"/>). Not needed on the same machine; wired up for a future
     /// remote client.</summary>
     public async Task<TimeOffsetEstimate> EstimateTimeOffsetAsync(CancellationToken ct = default)
     {
@@ -113,10 +113,9 @@ public sealed class PanelClient : IAsyncDisposable
 
     /// <summary>
     /// Starts (or restarts) a subscription: fetches the catalog if needed, then begins a background read
-    /// loop that feeds <see cref="Session"/> and transparently reconnects — on stream failure (plan section
-    /// 6's "a Lossless subscriber behind the buffer is disconnected with a resync code") or on a detected
-    /// seq gap — resuming with <c>from_time</c> = the last successfully received sample's <c>t</c> (plan
-    /// section 7).
+    /// loop that feeds <see cref="Session"/> and transparently reconnects — on stream failure (a Lossless
+    /// subscriber behind the buffer is disconnected with a resync code) or on a detected seq gap — resuming
+    /// with <c>from_time</c> = the last successfully received sample's <c>t</c>.
     /// </summary>
     public async Task SubscribeAsync(IReadOnlyList<string> patterns, DeliveryMode mode, long? fromTime = null, CancellationToken ct = default)
     {
@@ -199,7 +198,7 @@ public sealed class PanelClient : IAsyncDisposable
 
             nextFromTime = Session.LastReceivedT ?? nextFromTime;
 
-            // The catalog may have changed while we were disconnected (plan section 6); refresh it before
+            // The catalog may have changed while we were disconnected; refresh it before
             // resubscribing so callers see current topics as soon as the stream resumes. Best effort: if
             // this fails we still retry the subscribe itself below.
             try { await DescribeAsync(ct).ConfigureAwait(false); }

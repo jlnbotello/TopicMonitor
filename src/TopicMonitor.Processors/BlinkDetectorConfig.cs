@@ -1,7 +1,7 @@
 namespace TopicMonitor.Processors;
 
 /// <summary>
-/// Configuration for one blink detector instance (plan section 5, "Blink detector" row).
+/// Configuration for one blink detector instance.
 /// </summary>
 /// <param name="Input">Glob matched against derived enum color topic names, e.g. "led.*.color".</param>
 /// <param name="OffValue">The reference color name that means "off" (matches a key of the color

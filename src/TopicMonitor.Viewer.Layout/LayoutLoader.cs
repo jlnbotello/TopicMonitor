@@ -12,7 +12,7 @@ public sealed record LayoutLoadResult(LayoutDocument? Document, int? ErrorLine, 
 
 /// <summary>
 /// Loads <c>layout.yaml</c> and keeps the last valid <see cref="LayoutDocument"/> across a
-/// failed reload — mirrors the scenario-file semantics in plan.md section 4 ("Parse errors
+/// failed reload — mirrors the scenario-file semantics ("Parse errors
 /// report line and column; the server keeps the last valid scenario running"), applied here to
 /// layout loading (section 8: "load errors report line and column and keep the last valid
 /// layout").

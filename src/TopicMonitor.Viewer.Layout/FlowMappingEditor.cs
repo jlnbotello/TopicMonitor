@@ -6,7 +6,7 @@ namespace TopicMonitor.Viewer.Layout;
 /// Applies a minimal textual edit to a YAML document's source text: changes one scalar field of
 /// one flow mapping (e.g. <c>{ topic: "led.1.raw", as: lines }</c>) in place, leaving every other
 /// byte — including comments elsewhere in the file — untouched. This is the mechanism behind
-/// plan.md section 11, open point 1: saves patch the located node's text instead of
+/// , open point 1: saves patch the located node's text instead of
 /// re-serializing the whole document, so hand-written comments and formatting survive.
 /// </summary>
 internal static class FlowMappingEditor
@@ -16,7 +16,7 @@ internal static class FlowMappingEditor
     /// inside <paramref name="mapping"/>. If the key already exists, only its value's text is
     /// replaced. If not, a new <c>key: value</c> entry is inserted just before the mapping's
     /// closing <c>}</c> (lane and style entries in <c>layout.yaml</c> are always flow mappings;
-    /// see the examples in plan.md section 8).
+    /// see the examples ).
     /// </summary>
     public static string SetScalarField(string text, YamlMappingNode mapping, string key, string value)
     {

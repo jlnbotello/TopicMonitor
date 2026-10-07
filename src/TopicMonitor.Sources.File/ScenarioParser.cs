@@ -1,7 +1,7 @@
 namespace TopicMonitor.Sources.File;
 
 /// <summary>
-/// Recursive-descent parser for the `.scn` grammar (plan section 4). Statement boundaries are inferred from
+/// Recursive-descent parser for the `.scn` grammar. Statement boundaries are inferred from
 /// token shape rather than physical newlines: a sample line's assigns are a run of `ident '='` pairs, which ends
 /// as soon as the next token looks like a new time spec (a number or `+`) or a new `@` directive.
 /// </summary>

@@ -5,7 +5,7 @@ namespace TopicMonitor.Tests.Unit.Processors;
 
 /// <summary>
 /// Shared plumbing for driving a real <see cref="TopicBus"/> end-to-end in processor tests (publish raw
-/// samples, read back derived samples), per plan section 9 ("most faithful way to exercise the k-1 sample
+/// samples, read back derived samples), ("most faithful way to exercise the k-1 sample
 /// delay timing claims").
 /// </summary>
 internal static class TestSupport

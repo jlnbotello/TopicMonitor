@@ -1,6 +1,6 @@
 namespace TopicMonitor.Sources.File;
 
-/// <summary>A `.scn` syntax error. Reports a 1-based line and column, per plan section 4: "Parse errors report line and column".</summary>
+/// <summary>A `.scn` syntax error. Reports a 1-based line and column,: "Parse errors report line and column".</summary>
 public sealed class ScenarioParseException : Exception
 {
     public int Line { get; }

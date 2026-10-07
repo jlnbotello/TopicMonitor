@@ -7,7 +7,7 @@ namespace TopicMonitor.Client;
 /// domain and the server's mono clock, obtained via <c>GetTime()</c>.
 /// <para>
 /// On one machine the two domains are identical (offset ~ 0 modulo scheduling noise) and this estimate
-/// isn't needed for the latency probe (see <see cref="LatencyProbe"/>); it is wired up per plan section 7
+/// isn't needed for the latency probe (see <see cref="LatencyProbe"/>); it is wired up 
 /// ("GetTime() offset estimation is wired in for remote clients") so the path exists for v2. The estimator
 /// is deliberately simple: assume the request/response latency split evenly around the moment the server
 /// reports its timestamp.

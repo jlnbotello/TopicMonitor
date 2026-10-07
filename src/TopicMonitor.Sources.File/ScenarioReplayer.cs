@@ -6,7 +6,7 @@ namespace TopicMonitor.Sources.File;
 /// Drives scenario ticks on a shared <see cref="TimeProvider"/> via <see cref="TimeProvider.CreateTimer"/> (never
 /// <see cref="System.Threading.Timer"/> or <see cref="Task.Delay(TimeSpan)"/>), so under a
 /// <c>FakeTimeProvider</c> in tests, ticks only fire when the test explicitly advances the clock. Every tick
-/// publishes a <see cref="Sample"/> with every one of that tick's source's topics' current value (plan section 5:
+/// publishes a <see cref="Sample"/> with every one of that tick's source's topics' current value (:
 /// "Every source tick produces a sample, even without changes"); the bus's own publish policies decide what
 /// actually reaches history/subscribers. `@loop` needs no special handling here: each source's tick index just
 /// keeps counting up forever and <see cref="ScenarioExpander.Evaluate"/> reduces it modulo its own loop length

@@ -1,7 +1,7 @@
 namespace TopicMonitor.Viewer.Layout;
 
 /// <summary>
-/// Open point 2 (plan.md section 11, "Open points — resolved"): any catalog topic with no
+/// Open point 2: any catalog topic with no
 /// matching lane gets one appended, in-memory only, using its type's default renderer.
 /// Persisting the result to <c>layout.yaml</c> is a separate, explicit save call
 /// (see <see cref="LayoutDocument"/>) — this class never touches disk.

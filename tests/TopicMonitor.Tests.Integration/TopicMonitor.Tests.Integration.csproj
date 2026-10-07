@@ -9,7 +9,7 @@
          needs the same roll-forward as TopicMonitor.Server itself to start on a machine that only has a newer
          shared runtime (e.g. .NET 10) and not an exact 8.0.x match. -->
     <RollForward>LatestMajor</RollForward>
-    <!-- Excludes the real-time latency suite (plan section 9: "separate category") from a plain
+    <!-- Excludes the real-time latency suite ("separate category") from a plain
          "dotnet test" with no filter option. "dotnet test" with a filter option passes that expression to
          MSBuild as the global property VSTestTestCaseFilter, and global properties set on the command line
          always win over a project file's own assignment to the same property - so passing the filter option

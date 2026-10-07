@@ -4,7 +4,7 @@ using Shouldly;
 namespace TopicMonitor.Tests.Unit.Layout;
 
 /// <summary>
-/// Plan.md section 9: "Layout: YAML load, template expansion, style resolution order, renderer
+///: "Layout: YAML load, template expansion, style resolution order, renderer
 /// applicability per type, save/load round trip." Exercises the full pipeline -- load, expand,
 /// resolve styles for float/vec/enum/bool/string lanes, save, reload -- and checks the reloaded
 /// model is equivalent to the one that was saved.

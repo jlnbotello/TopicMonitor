@@ -4,7 +4,7 @@ using TopicMonitor.Contracts;
 namespace TopicMonitor.Server.Services;
 
 /// <summary>
-/// Implements the v1 gRPC surface (plan section 6) directly over <see cref="TopicMonitor.Core.ITopicBus"/>.
+/// Implements the v1 gRPC surface directly over <see cref="TopicMonitor.Core.ITopicBus"/>.
 ///
 /// Namespace note: this file deliberately never writes a bare <c>using TopicMonitor.Core;</c> and always
 /// qualifies TopicMonitor.Core types (<c>TopicMonitor.Core.TopicValue</c>, <c>TopicMonitor.Core.Validity</c>,
@@ -89,7 +89,7 @@ public sealed class TopicGrpcService : TopicService.TopicServiceBase
         }
         catch (TopicMonitor.Core.SubscriberOverflowException ex)
         {
-            // Plan section 5: "a subscriber behind the buffer is disconnected with a resync code." The
+            //: "a subscriber behind the buffer is disconnected with a resync code." The
             // client must re-sync via Describe() (catalog may have moved on) and a fresh
             // Subscribe(from_time = last received t) rather than treating this as a generic failure.
             throw new RpcException(new Status(

@@ -1,7 +1,7 @@
 namespace TopicMonitor.Viewer.Layout;
 
 /// <summary>
-/// The renderer-applicability table from plan.md section 8:
+/// The renderer-applicability table:
 ///
 /// | Renderer | Applies to                              | Default for      |
 /// |----------|------------------------------------------|-------------------|

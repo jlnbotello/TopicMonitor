@@ -1,7 +1,7 @@
 namespace TopicMonitor.Processors;
 
 /// <summary>
-/// Plain C# model of one entry of the color classifier's YAML configuration (plan section 5):
+/// Plain C# model of one entry of the color classifier's YAML configuration:
 /// <code>
 /// color:
 ///   - input: led.*.raw
@@ -22,7 +22,7 @@ namespace TopicMonitor.Processors;
 /// <param name="Components">Component names in the order they appear in the raw vec value, e.g. ["r","g","b"].</param>
 /// <param name="References">Reference color name -> component vector, e.g. "red" -> [240, 20, 20].</param>
 /// <param name="K">Number of consecutive equal classifications required before a new color is accepted
-/// (plan section 11, resolved: default k = 2).</param>
+/// (default k = 2).</param>
 public sealed record ColorClassifierConfig(
     string Input,
     string Space,

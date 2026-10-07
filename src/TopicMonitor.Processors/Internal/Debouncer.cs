@@ -1,7 +1,7 @@
 namespace TopicMonitor.Processors.Internal;
 
 /// <summary>
-/// Shared k-sample debounce used by the color classifier and the text stabilizer (plan section 5:
+/// Shared k-sample debounce used by the color classifier and the text stabilizer (:
 /// "new color/text after k equal samples", default k = 2).
 ///
 /// Rule implemented:
